@@ -1,0 +1,13 @@
+[package]
+name = "metar"
+version = "0.1.0"
+authors = ["Lily Hopkins <bsalarius@gmail.com>"]
+edition = "2018"
+description = "METAR parsing library for Rust"
+license = "MIT"
+homepage = "https://github.com/Bsalarius/metar-rs"
+repository = "https://github.com/Bsalarius/metar-rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
