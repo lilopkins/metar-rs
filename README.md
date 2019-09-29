@@ -4,7 +4,7 @@
 
 This simple usage will print out the parsed data from the METAR.
 
-```rs
+```rust
 extern crate metar;
 
 fn main() {
