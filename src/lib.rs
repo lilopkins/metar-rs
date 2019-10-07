@@ -1,6 +1,72 @@
 #![deny(missing_docs)]
 
+//! # METAR parsing library for Rust
 //!
+//! ## Quick usage
+//!
+//! This simple usage will print out the parsed data from the METAR.
+//!
+//! ```rust
+//! extern crate metar;
+//!
+//! fn main() {
+//!   let metar = "EGHI 282120Z 19015KT 140V220 6000 RA SCT006 BKN009 16/14 Q1006".to_string();
+//!   let r = metar::Metar::parse(metar).unwrap();
+//!   println!("{:#?}", r);
+//! }
+//! ```
+//!
+//! ## Issues?
+//!
+//! METARs are complicated structures. If you come across a METAR that doesn't parse
+//! correctly, please open an issue and include the METAR. This will aid in debugging
+//! the issue significantly.
+//!
+//! ## Definition of a METAR
+//!
+//! A METAR can be defined with the following EBNF description:
+//!
+//! ```text
+//! letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O"
+//! 	| "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z".
+//! digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9".
+//! digit6 = "0" | "1" | "2" | "3" | "4" | "5" | "6".
+//! digit2 = "0" | "1" | "2".
+//! heading = ( "3" digit6 digit | digit2 digit digit ).
+//! rwheading = ( "3" digit6 | digit2 digit ).
+//! wxtype = "DZ" | "RA" | "SN" | "SG" | "PL" | "IC" | "GR" | "GS" | "UP"
+//! 	| "FG" | "BR" | "SA" | "DU" | "HZ" | "FU" | "VA"
+//! 	| "PO" | "SQ" | "FC" | "DS" | "SS".
+//! wxcharacteristic = "TS" | "SH" | "FZ" | "BL" | "DR" | "MI" | "BC" | "PR".
+//! wxintensity = "-" | "+" | "VC".
+//! cloudamount = "FEW" | "SCT" | "BKN" | "OVC".
+//! cloudtype = [ "CB" | "TCU" ].
+//! temp = [ "M" ] digit digit.
+//!
+//! station = letter letter letter letter.
+//! time = digit digit digit digit digit digit "Z".
+//! wind = ( heading | "VRB" | "ABV" ) digit digit [ "G" digit digit ] ( "KT" | "MPS" ) " " [ heading "V" heading ].
+//! visibility = [ "M" ] ( digit digit digit digit ) | ( digit digit "SM" ) | "CAVOK" | "NSC" | "SKC".
+//! rvr = { "R" rwheading [ "R" | "L" | "C" ] "/" [ "P" | "M" ] digit digit digit digit [ "V" digit digit digit digit ] [ "D" | "U" | "N" ] " " }.
+//! weather = { [ wxintensity ] [ wxcharacteristic ] wxtype " " }.
+//! clouds = "NCD" | { cloudamount digit digit digit cloudtype }.
+//! vertvisibility = "VV" digit digit digit.
+//! temperatures = temp "/" temp.
+//! pressure = ( "Q" | "A" ) digit digit digit digit.
+//!
+//! metar = station " " time " " ( "NIL" | ( [ "AUTO " ] wind " " visibility " " rvr weather clouds [ vertvisibility " " ] temperatures pressure "..." ) ).
+//! ```
+//!
+//! A (Perl-compatible) Regular expression reading a METAR could look like this:
+//!
+//! `(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}))? (?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?\/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR)?(?:DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) )*)(?P<cloud>NCD|(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?P<vert_visibility>[0-9]{3}) )?(?P<temperature>M?[0-9]{2})\/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?$`
+//!
+
+extern crate regex;
+
+use regex::Regex;
+
+use std::num::ParseIntError;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// A struct to store time as it is represented in a METAR
@@ -127,27 +193,27 @@ pub struct Metar {
 /// An error when parsing a METAR
 pub enum MetarError {
     /// An error whilst parsing time
-    TimeParseError(std::num::ParseIntError),
+    TimeParseError(ParseIntError),
     /// An error parsing wind direction
-    WindDirectionError(std::num::ParseIntError),
+    WindDirectionError(ParseIntError),
     /// An error parsing wind speed
-    WindSpeedError(std::num::ParseIntError),
+    WindSpeedError(ParseIntError),
     /// An error parsing how the winds are gusting
-    WindGustError(std::num::ParseIntError),
+    WindGustError(ParseIntError),
     /// An error parsing the wind directional variation
-    WindVaryingError(std::num::ParseIntError),
+    WindVaryingError(ParseIntError),
     /// An error parsing the current horizontal visibility
-    VisibilityError(std::num::ParseIntError),
+    VisibilityError(ParseIntError),
     /// An error in parsing the cloud layer floor
-    CloudFloorError(std::num::ParseIntError),
+    CloudFloorError(ParseIntError),
     /// An error parsing the vertical visibility
-    VerticalVisibilityError(std::num::ParseIntError),
+    VerticalVisibilityError(ParseIntError),
     /// An error parsing the current barometric pressure
-    AirPressureError(std::num::ParseIntError),
+    AirPressureError(ParseIntError),
     /// An error parsing the current temperature
-    TemperatureError(std::num::ParseIntError),
+    TemperatureError(ParseIntError),
     /// An error parsing the current dewpoint
-    DewpointError(std::num::ParseIntError),
+    DewpointError(ParseIntError),
 }
 
 impl Metar {
@@ -173,16 +239,15 @@ impl Metar {
         let mut pressure = Pressure::Hectopascals(0);
         let mut remarks = None;
 
-        let parts: Vec<&str> = data.split(" ").collect();
+        let re = Regex::new(r"(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}))? (?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR)?(?:DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) )*)(?P<cloud>NCD|(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?P<vert_visibility>[0-9]{3}) )?(?P<temperature>M?[0-9]{2})/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?$").unwrap();
 
-        let mut index_offset = 0;
+        let parts = re.captures(&data).unwrap();
 
         // Parse station
-        let station = parts[index_offset].to_string();
-        index_offset += 1;
+        let station = parts["station"].to_string();
 
         // Parse time
-        let time_s = parts[index_offset].to_string();
+        let time_s = parts["time"].to_string();
         time.date = match time_s[0..2].parse::<u8>() {
             Ok(v) => v,
             Err(e) => return Err(MetarError::TimeParseError(e)),
@@ -195,10 +260,9 @@ impl Metar {
             Ok(v) => v,
             Err(e) => return Err(MetarError::TimeParseError(e)),
         };
-        index_offset += 1;
 
         // Deal with NIL/AUTO
-        if parts[index_offset] == "NIL" {
+        if &parts["data"] == "NIL" {
             // NIL METAR
             return Ok(Metar {
                 station,
@@ -212,14 +276,11 @@ impl Metar {
                 pressure,
                 remarks,
             });
-        } else if parts[index_offset] == "AUTO" {
-            index_offset += 1;
         }
 
         // Wind
-        let wind_p = parts[index_offset];
         // Wind heading
-        let hdg = &wind_p[0..3];
+        let hdg = &parts["wind_dir"];
         if hdg == "VRB" {
             wind.dir = WindDirection::Variable;
         } else if hdg == "ABV" {
@@ -231,18 +292,18 @@ impl Metar {
             });
         }
         // Wind speed and gusting
-        let speed = match wind_p[3..5].parse::<u32>() {
+        let speed = match parts["wind_speed"].parse::<u32>() {
             Ok(v) => v,
             Err(e) => return Err(MetarError::WindSpeedError(e)),
         };;
         let mut gusting: Option<u32> = None;
-        if wind_p.contains("G") {
-            gusting = Some(match wind_p[6..8].parse::<u32>() {
+        if let Some(part) = parts.name("wind_gusts") {
+            gusting = Some(match part.as_str().parse::<u32>() {
                 Ok(v) => v,
                 Err(e) => return Err(MetarError::WindGustError(e)),
             });
         }
-        if wind_p.ends_with("KT") {
+        if parts["wind_unit"].ends_with("KT") {
             // knots
             wind.speed = WindSpeed::Knot(speed);
             if let Some(g) = gusting {
@@ -255,24 +316,21 @@ impl Metar {
                 wind.gusting = Some(WindSpeed::MetresPerSecond(g));
             }
         }
-        index_offset += 1;
 
-        if parts[index_offset].contains("V") {
+        if let Some(part) = parts.name("wind_varying_from") {
             // Wind varying
-            let part = parts[index_offset];
-            let from = match part[0..3].parse::<u32>() {
+            let from = match part.as_str().parse::<u32>() {
                 Ok(v) => v,
                 Err(e) => return Err(MetarError::WindVaryingError(e)),
             };
-            let to = match part[4..].parse::<u32>() {
+            let to = match parts["wind_varying_to"].parse::<u32>() {
                 Ok(v) => v,
                 Err(e) => return Err(MetarError::WindVaryingError(e)),
             };
             wind.varying = Some((from, to));
-            index_offset += 1;
         }
 
-        let visibility_p = parts[index_offset];
+        let visibility_p = &parts["visibility"];
         if visibility_p == "CAVOK" {
             visibility = Visibility::CavOK;
         } else if visibility_p == "NSC" {
@@ -304,119 +362,96 @@ impl Metar {
                 });
             }
         }
-        index_offset += 1;
 
-        while parts[index_offset].starts_with("R")
-            && parts[index_offset].contains("/") {
-            // RVR
-            // TODO: RVR
-            index_offset += 1;
-        }
+        // TODO: RVRs
 
-        // Weather
-        // TODO: Currently this is skipped
-        while !(parts[index_offset].starts_with("NCD")
-                || parts[index_offset].starts_with("FEW")
-                || parts[index_offset].starts_with("SCT")
-                || parts[index_offset].starts_with("BKN")
-                || parts[index_offset].starts_with("OVC")) {
-
-            index_offset += 1;
-        }
+        // TODO: Weather
 
         // Clouds
-        while parts[index_offset].starts_with("NCD")
-                || parts[index_offset].starts_with("FEW")
-                || parts[index_offset].starts_with("SCT")
-                || parts[index_offset].starts_with("BKN")
-                || parts[index_offset].starts_with("OVC") {
-
-            let part = parts[index_offset];
-            if part == "NCD" {
-                index_offset += 1;
-                break;
+        if let Some(clouds_s) = parts.name("clouds") {
+            let clouds_p: Vec<_> = clouds_s.as_str().split(" ").collect();
+            for cloud in clouds_p {
+                let part = cloud.trim();
+                if part == "NCD" {
+                    break;
+                }
+                // Cloud type
+                let mut typ = CloudType::Normal;
+                if part.ends_with("TCU") {
+                    typ = CloudType::ToweringCumulus;
+                } else if part.ends_with("CB") {
+                    typ = CloudType::Cumulonimbus;
+                }
+                // Cloud floor
+                let floor = match part[3..6].parse::<u32>() {
+                    Ok(v) => v,
+                    Err(e) => return Err(MetarError::CloudFloorError(e)),
+                };
+                // Cloud cover
+                if part.starts_with("FEW") {
+                    cloud_layers.push(CloudLayer::Few(typ, floor));
+                } else if part.starts_with("SCT") {
+                    cloud_layers.push(CloudLayer::Scattered(typ, floor));
+                } else if part.starts_with("BKN") {
+                    cloud_layers.push(CloudLayer::Broken(typ, floor));
+                } else if part.starts_with("OVC") {
+                    cloud_layers.push(CloudLayer::Overcast(typ, floor));
+                }
             }
-            // Cloud type
-            let mut typ = CloudType::Normal;
-            if part.ends_with("TCU") {
-                typ = CloudType::ToweringCumulus;
-            } else if part.ends_with("CB") {
-                typ = CloudType::Cumulonimbus;
-            }
-            // Cloud floor
-            let floor = match part[3..6].parse::<u32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::CloudFloorError(e)),
-            };
-            // Cloud cover
-            if part.starts_with("FEW") {
-                cloud_layers.push(CloudLayer::Few(typ, floor));
-            } else if part.starts_with("SCT") {
-                cloud_layers.push(CloudLayer::Scattered(typ, floor));
-            } else if part.starts_with("BKN") {
-                cloud_layers.push(CloudLayer::Broken(typ, floor));
-            } else if part.starts_with("OVC") {
-                cloud_layers.push(CloudLayer::Overcast(typ, floor));
-            }
-            index_offset += 1;
         }
 
-        if parts[index_offset].starts_with("VV") {
+        if let Some(part) = parts.name("vert_visibility") {
             // Vertical visibilty
-            vert_visibility = match parts[index_offset][2..].parse::<u32>() {
+            vert_visibility = match part.as_str().parse::<u32>() {
                 Ok(v) => Some(v),
                 Err(e) => return Err(MetarError::VerticalVisibilityError(e)),
             };
-            index_offset += 1;
         }
 
-        if parts[index_offset].contains("/") {
-            // temp/dewpoint
-            let internal_parts: Vec<&str> = parts[index_offset].split("/").collect();
-            let temp = internal_parts[0];
-            let dewp = internal_parts[1];
-            if temp.starts_with("M") {
-                temperature = -1 * match temp[1..].parse::<i32>() {
-                    Ok(v) => v,
-                    Err(e) => return Err(MetarError::TemperatureError(e)),
-                };
-            } else {
-                temperature = match temp.parse::<i32>() {
-                    Ok(v) => v,
-                    Err(e) => return Err(MetarError::TemperatureError(e)),
-                };
-            }
-            if dewp.starts_with("M") {
-                dewpoint = -1 * match dewp[1..].parse::<i32>() {
-                    Ok(v) => v,
-                    Err(e) => return Err(MetarError::DewpointError(e)),
-                };
-            } else {
-                dewpoint = match dewp.parse::<i32>() {
-                    Ok(v) => v,
-                    Err(e) => return Err(MetarError::DewpointError(e)),
-                };
-            }
-            index_offset += 1;
+        let temp = &parts["temperature"];
+        let dewp = &parts["dewpoint"];
+        if temp.starts_with("M") {
+            temperature = -1 * match temp[1..].parse::<i32>() {
+                Ok(v) => v,
+                Err(e) => return Err(MetarError::TemperatureError(e)),
+            };
+        } else {
+            temperature = match temp.parse::<i32>() {
+                Ok(v) => v,
+                Err(e) => return Err(MetarError::TemperatureError(e)),
+            };
+        }
+        if dewp.starts_with("M") {
+            dewpoint = -1 * match dewp[1..].parse::<i32>() {
+                Ok(v) => v,
+                Err(e) => return Err(MetarError::DewpointError(e)),
+            };
+        } else {
+            dewpoint = match dewp.parse::<i32>() {
+                Ok(v) => v,
+                Err(e) => return Err(MetarError::DewpointError(e)),
+            };
         }
 
-        if parts[index_offset].starts_with("Q") {
+        if parts["pressure"].starts_with("Q") {
             // hPa pressure
-            pressure = Pressure::Hectopascals(match parts[index_offset][1..].parse::<u32>() {
+            pressure = Pressure::Hectopascals(match parts["pressure"][1..].parse::<u32>() {
                 Ok(v) => v,
                 Err(e) => return Err(MetarError::AirPressureError(e)),
             });
-            index_offset += 1;
-        } else if parts[index_offset].starts_with("A") {
+        } else if parts["pressure"].starts_with("A") {
             // inMg pressure
-            pressure = Pressure::InchesMercury(match parts[index_offset][1..].parse::<u32>() {
+            pressure = Pressure::InchesMercury(match parts["pressure"][1..].parse::<u32>() {
                 Ok(v) => v,
                 Err(e) => return Err(MetarError::AirPressureError(e)),
             });
-            index_offset += 1;
         }
 
-        remarks = Some(parts[index_offset..].join(" "));
+        if let Some(part) = parts.name("remarks") {
+            remarks = Some(part.as_str().to_string());
+        } else {
+            remarks = None;
+        }
 
         Ok(Metar {
             station,
@@ -460,5 +495,32 @@ mod tests {
         assert_eq!(r.dewpoint, 14);
 
         assert_eq!(r.pressure, super::Pressure::Hectopascals(1006));
+    }
+
+    #[test]
+    fn test_metar_2() {
+        let metar = "EGHI 062050Z 31006KT 270V340 CAVOK 13/07 Q1017".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "EGHI");
+
+        assert_eq!(r.time.date, 06);
+        assert_eq!(r.time.hour, 20);
+        assert_eq!(r.time.minute, 50);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Heading(310));
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(6));
+        assert_eq!(r.wind.varying, Some((270, 340)));
+
+        assert_eq!(r.visibility, super::Visibility::CavOK);
+
+        assert_eq!(r.temperature, 13);
+        assert_eq!(r.dewpoint, 7);
+
+        assert_eq!(r.pressure, super::Pressure::Hectopascals(1017));
     }
 }
