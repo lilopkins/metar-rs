@@ -241,7 +241,7 @@ impl Metar {
         let mut pressure = Pressure::Hectopascals(0);
         let mut remarks = None;
 
-        let re = Regex::new(r"(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}))? (?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>NCD|(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?P<vert_visibility>[0-9]{3}) )?(?P<temperature>M?[0-9]{2})/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?$").unwrap();
+        let re = Regex::new(r"(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}) )?(?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>NCD|(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?P<vert_visibility>[0-9]{3}) )?(?P<temperature>M?[0-9]{2})/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?").unwrap();
 
         let parts = re.captures(&data);
         if parts.is_none() {
@@ -407,7 +407,7 @@ impl Metar {
         }
 
         if let Some(part) = parts.name("vert_visibility") {
-            // Vertical visibilty
+            // Vertical visibility
             vert_visibility = match part.as_str().parse::<u32>() {
                 Ok(v) => Some(v),
                 Err(e) => return Err(MetarError::VerticalVisibilityError(e)),
@@ -549,9 +549,120 @@ mod tests {
         assert_eq!(r.wind.speed, super::WindSpeed::Knot(13));
         assert_eq!(r.wind.varying, Some((160, 220)));
 
+        assert_eq!(r.visibility, super::Visibility::Metres(3000));
+
         assert_eq!(r.temperature, 15);
         assert_eq!(r.dewpoint, 14);
 
         assert_eq!(r.pressure, super::Pressure::Hectopascals(1012));
+    }
+
+    #[test]
+    fn test_metar_4() {
+        let metar = "EGHI 071750Z 21010KT 3500 -RADZ BR BKN004 16/15 Q1011".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "EGHI");
+
+        assert_eq!(r.time.date, 07);
+        assert_eq!(r.time.hour, 17);
+        assert_eq!(r.time.minute, 50);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Heading(210));
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(10));
+        assert_eq!(r.wind.varying, None);
+
+        assert_eq!(r.visibility, super::Visibility::Metres(3500));
+
+        assert_eq!(r.temperature, 16);
+        assert_eq!(r.dewpoint, 15);
+
+        assert_eq!(r.pressure, super::Pressure::Hectopascals(1011));
+    }
+
+    #[test]
+    fn test_metar_5() {
+        let metar = "EGHI 080650Z VRB03KT CAVOK 12/10 Q1009".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "EGHI");
+
+        assert_eq!(r.time.date, 08);
+        assert_eq!(r.time.hour, 06);
+        assert_eq!(r.time.minute, 50);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Variable);
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(3));
+        assert_eq!(r.wind.varying, None);
+
+        assert_eq!(r.visibility, super::Visibility::CavOK);
+
+        assert_eq!(r.temperature, 12);
+        assert_eq!(r.dewpoint, 10);
+
+        assert_eq!(r.pressure, super::Pressure::Hectopascals(1009));
+    }
+
+    #[test]
+    fn test_metar_6() {
+        let metar = "EGHI 081650Z 23010KT 9999 VCSH FEW018 FEW025TCU 15/11 Q1006".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "EGHI");
+
+        assert_eq!(r.time.date, 08);
+        assert_eq!(r.time.hour, 16);
+        assert_eq!(r.time.minute, 50);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Heading(230));
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(10));
+        assert_eq!(r.wind.varying, None);
+
+        assert_eq!(r.visibility, super::Visibility::Metres(9999));
+
+        assert_eq!(r.temperature, 15);
+        assert_eq!(r.dewpoint, 11);
+
+        assert_eq!(r.pressure, super::Pressure::Hectopascals(1006));
+    }
+
+    #[test]
+    fn test_metar_7() {
+        let metar = "EGHI 110750Z 22017G28KT 190V250 6000 -RA FEW007 BKN010 15/14 Q1008 RERA".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "EGHI");
+
+        assert_eq!(r.time.date, 11);
+        assert_eq!(r.time.hour, 07);
+        assert_eq!(r.time.minute, 50);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Heading(220));
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(17));
+        assert_eq!(r.wind.gusting, Some(super::WindSpeed::Knot(28)));
+        assert_eq!(r.wind.varying, Some((190, 250)));
+
+        assert_eq!(r.visibility, super::Visibility::Metres(6000));
+
+        assert_eq!(r.temperature, 15);
+        assert_eq!(r.dewpoint, 14);
+
+        assert_eq!(r.pressure, super::Pressure::Hectopascals(1008));
     }
 }
