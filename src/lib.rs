@@ -128,6 +128,16 @@ pub enum Pressure {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
+/// Vertical visibility measurement
+pub enum VertVisibility {
+    /// A distance of vertical visibility
+    Distance(u32),
+    /// The vertical visibility value is present, so is reduced, but by an amount that hasn't or
+    /// cannot be measured
+    ReducedByUnknownAmount,
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
 /// Cloud cover
 pub enum CloudLayer {
     /// Few clouds (1/8)
@@ -178,7 +188,7 @@ pub struct Metar {
     /// The current cloud layers
     pub cloud_layers: Vec<CloudLayer>,
     /// The current vertical visibility, in feet
-    pub vert_visibility: Option<u32>,
+    pub vert_visibility: Option<VertVisibility>,
     /// The current temperature
     pub temperature: i32,
     /// The current dewpoint
@@ -241,7 +251,7 @@ impl Metar {
         let mut pressure = Pressure::Hectopascals(0);
         let mut remarks = None;
 
-        let re = Regex::new(r"(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}) )?(?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>NCD|(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?P<vert_visibility>[0-9]{3}) )?(?P<temperature>M?[0-9]{2})/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?").unwrap();
+        let re = Regex::new(r"(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}) )?(?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>NCD |NSC |(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?:///|(?P<vert_visibility>[0-9]{3})) )?(?P<temperature>M?[0-9]{2})/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?").unwrap();
 
         let parts = re.captures(&data);
         if parts.is_none() {
@@ -378,7 +388,8 @@ impl Metar {
             let clouds_p: Vec<_> = clouds_s.as_str().split(" ").collect();
             for cloud in clouds_p {
                 let part = cloud.trim();
-                if part == "NCD" {
+                if part == "NCD"
+                    || part == "NSC" {
                     break;
                 }
                 // Cloud type
@@ -408,10 +419,14 @@ impl Metar {
 
         if let Some(part) = parts.name("vert_visibility") {
             // Vertical visibility
-            vert_visibility = match part.as_str().parse::<u32>() {
-                Ok(v) => Some(v),
-                Err(e) => return Err(MetarError::VerticalVisibilityError(e)),
-            };
+            if part.as_str() == "///" {
+                vert_visibility = Some(VertVisibility::ReducedByUnknownAmount);
+            } else {
+                vert_visibility = match part.as_str().parse::<u32>() {
+                    Ok(v) => Some(VertVisibility::Distance(v)),
+                    Err(e) => return Err(MetarError::VerticalVisibilityError(e)),
+                };
+            }
         }
 
         let temp = &parts["temperature"];
@@ -664,5 +679,61 @@ mod tests {
         assert_eq!(r.dewpoint, 14);
 
         assert_eq!(r.pressure, super::Pressure::Hectopascals(1008));
+    }
+
+    #[test]
+    fn test_metar_8() {
+        let metar = "EGHI 131950Z 06001KT 9999 MIFG NSC 09/08 Q1010".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "EGHI");
+
+        assert_eq!(r.time.date, 13);
+        assert_eq!(r.time.hour, 19);
+        assert_eq!(r.time.minute, 50);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Heading(060));
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(01));
+        assert_eq!(r.wind.gusting, None);
+        assert_eq!(r.wind.varying, None);
+
+        assert_eq!(r.visibility, super::Visibility::Metres(9999));
+
+        assert_eq!(r.temperature, 09);
+        assert_eq!(r.dewpoint, 08);
+
+        assert_eq!(r.pressure, super::Pressure::Hectopascals(1010));
+    }
+
+    #[test]
+    fn test_metar_9() {
+        let metar = "EGHI 150650Z 06001KT 0500 R20/1000 FG VV/// 11/10 Q1003".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "EGHI");
+
+        assert_eq!(r.time.date, 15);
+        assert_eq!(r.time.hour, 06);
+        assert_eq!(r.time.minute, 50);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Heading(060));
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(01));
+        assert_eq!(r.wind.gusting, None);
+        assert_eq!(r.wind.varying, None);
+
+        assert_eq!(r.visibility, super::Visibility::Metres(0500));
+
+        assert_eq!(r.temperature, 11);
+        assert_eq!(r.dewpoint, 10);
+
+        assert_eq!(r.pressure, super::Pressure::Hectopascals(1003));
     }
 }
