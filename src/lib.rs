@@ -10,9 +10,9 @@
 //! extern crate metar;
 //!
 //! fn main() {
-//!   let metar = "EGHI 282120Z 19015KT 140V220 6000 RA SCT006 BKN009 16/14 Q1006".to_string();
-//!   let r = metar::Metar::parse(metar).unwrap();
-//!   println!("{:#?}", r);
+//!     let metar = "EGHI 282120Z 19015KT 140V220 6000 RA SCT006 BKN009 16/14 Q1006".to_string();
+//!     let r = metar::Metar::parse(metar).unwrap();
+//!     println!("{:#?}", r);
 //! }
 //! ```
 //!
@@ -24,43 +24,82 @@
 //!
 //! ## Definition of a METAR
 //!
-//! A METAR can be defined with the following EBNF description:
+//! A METAR can be defined with the following Backus-Naur Form description:
 //!
-//! ```text
-//! letter = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O"
-//! 	| "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z".
-//! digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9".
-//! digit6 = "0" | "1" | "2" | "3" | "4" | "5" | "6".
-//! digit2 = "0" | "1" | "2".
-//! heading = ( "3" digit6 digit | digit2 digit digit ).
-//! rwheading = ( "3" digit6 | digit2 digit ).
-//! wxtype = "DZ" | "RA" | "SN" | "SG" | "PL" | "IC" | "GR" | "GS" | "UP"
-//! 	| "FG" | "BR" | "SA" | "DU" | "HZ" | "FU" | "VA"
-//! 	| "PO" | "SQ" | "FC" | "DS" | "SS".
-//! wxcharacteristic = "TS" | "SH" | "FZ" | "BL" | "DR" | "MI" | "BC" | "PR".
-//! wxintensity = "-" | "+" | "VC".
-//! cloudamount = "FEW" | "SCT" | "BKN" | "OVC".
-//! cloudtype = [ "CB" | "TCU" ].
-//! temp = [ "M" ] digit digit.
-//!
-//! station = letter letter letter letter.
-//! time = digit digit digit digit digit digit "Z".
-//! wind = ( heading | "VRB" | "ABV" ) digit digit [ "G" digit digit ] ( "KT" | "MPS" ) " " [ heading "V" heading ].
-//! visibility = [ "M" ] ( digit digit digit digit ) | ( digit digit "SM" ) | "CAVOK" | "NSC" | "SKC".
-//! rvr = { "R" rwheading [ "R" | "L" | "C" ] "/" [ "P" | "M" ] digit digit digit digit [ "V" digit digit digit digit ] [ "D" | "U" | "N" ] " " }.
-//! weather = { [ wxintensity ] [ wxcharacteristic ] wxtype " " }.
-//! clouds = "NCD" | { cloudamount digit digit digit cloudtype }.
-//! vertvisibility = "VV" digit digit digit.
-//! temperatures = temp "/" temp.
-//! pressure = ( "Q" | "A" ) digit digit digit digit.
-//!
-//! metar = station " " time " " ( "NIL" | ( [ "AUTO " ] wind " " visibility " " rvr weather clouds [ vertvisibility " " ] temperatures pressure "..." ) ).
 //! ```
+//! <metar> ::= <station> ' ' <observationtime> ' ' <method> ' ' <wind> ' ' <wind_varying> <cloudsvis> ' ' <temps> ' ' <pressure> <remark>
 //!
-//! A (Perl-compatible) Regular expression reading a METAR could look like this:
+//! <station> ::= <letter><letter><letter><letter>
 //!
-//! `(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}) )?(?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?\/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>CLR |NCD |NSC |(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?:\/\/\/|(?P<vert_visibility>[0-9]{3})) )?(?P<temperature>M?[0-9]{2})\/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?`
+//! <method> ::= '' | 'AUTO'
 //!
+//! <observationtime> ::= <obs_day><obs_hour><obs_minute> 'Z'
+//! <obs_day> ::= <obs_day_1><digit> | '3' <obs_day_2>
+//! <obs_day_1> ::= '0' | '1' | '2'
+//! <obs_day_2> ::= '0' | '1'
+//! <obs_hour> ::= <obs_hour_1><digit> | '2' <obs_hour_2>
+//! <obs_hour_1> ::= '0' | '1'
+//! <obs_hour_2> ::= '0' | '1' | '2' | '3'
+//! <obs_minute> ::= <obs_minute_1><digit>
+//! <obs_minute_1> ::= '0' | '1' | '2' | '3' | '4' | '5'
+//!
+//! <wind> ::= <wind_dir><digit><digit><wind_gusts> 'KT'
+//!			 | <wind_dir><digit><digit><wind_gusts> 'MPS'
+//! <wind_dir> ::= <angle> | 'VRB'
+//! <wind_gusts> ::= '' | 'G' <digit><digit>
+//!
+//! <wind_varying> ::= '' | <angle> 'V' <angle> ' '
+//!
+//! <angle> ::= <angle_1><digit><digit> | '3' <angle_2><digit>
+//! <angle_1> ::= '0' | '1' | '2'
+//! <angle_2> ::= '0' | '1' | '2' | '3' | '4' | '5'
+//!
+//! <cloudsvis> ::= 'CAVOK' | <visibility> <rvr> <weather> <clouds>
+//! <visibility> ::= <digit><digit><digit><digit> | <digit><digit> 'SM'
+//! <clouds> ::= 'CLR' | 'SKC' | 'NCD' | 'NSC' | <cloud_description_list> | <vertical_visibility>
+//! <rvr> ::= <rvr_entry> | <rvr_entry><rvr>
+//! <rvr_entry> ::= 'R' <runway_number> '/' <rvr_vis> <rvr_trend>
+//! <runway_number> ::= <angle_1><digit><runway_modifier> | '3' <angle_2><runway_modifier>
+//! <runway_modifier> ::= '' | 'L' | 'C' | 'R'
+//! <rvr_vis> ::= 'P' <digit><digit><digit><digit> | 'M' <digit><digit><digit><digit>
+//! <rvr_trend> ::= 'D' | 'U' | 'N'
+//!
+//! <cloud_description_list> ::= <cloud_description> | <cloud_description> <cloud_description_list>
+//! <cloud_description> ::= <cloud_density> <cloud_floor> <cloud_type>
+//! <cloud_density> ::= 'FEW' | 'SCT' | 'BKN' | 'OVC' | '///'
+//! <cloud_floor> ::= <digit><digit><digit> | '///'
+//! <cloud_type> ::= '' | 'CB' | 'TCU' | '///'
+//!
+//! <vertical_visibility> ::= 'VV' <vertical_visibility_distance>
+//! <vertical_visibility_distance> ::= '///' | <digit><digit>
+//!
+//! <weather> ::= <weather_cond> | <weather_cond> <weather>
+//! <weather_cond> ::= <weather_intesity><weather_descriptor><weather_preceipitation>
+//!				 	 | <weather_obscuration>
+//!					 | <weather_other>
+//!					 | <weather_preceipitation><weather_timing>
+//! <weather_intesity> ::= '' | '+' | '-' | 'VC'
+//! <weather_descriptor> ::= '' | 'MI' | 'PR' | 'BC' | 'DR' | 'BL' | 'SH' | 'TS' | 'FZ'
+//! <weather_preceipitation> ::= 'RA' | 'DZ' | 'SN' | 'SG' | 'IC' | 'PL' | 'GR' | 'GS' | 'UP'
+//! <weather_obscuration> ::= 'FG' | 'VA' | 'BR' | 'HZ' | 'DU' | 'FU' | 'SA' | 'PY'
+//! <weather_other> ::= 'SQ' | 'PO' | 'DS' | 'SS' | 'FC'
+//! <weather_timing> ::= 'B' <weather_timing_time> 'E' <weather_timing_time>
+//!				       | 'B' <weather_timing_time>
+//!				       | 'E' <weather_timing_time>
+//! <weather_timing_time> ::= <digit><digit> | <digit><digit><digit><digit>
+//!
+//!
+//! <temps> ::= <temperature> '/' <temperature>
+//! <temperature> ::= 'M' <digit><digit>
+//!					| <digit><digit>
+//!
+//! <pressure> ::= 'Q' <digit><digit><digit><digit>
+//!				  | 'A' <digit><digit><digit><digit>
+//!
+//! <remark> ::= ' RMK' ...
+//!
+//! <digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+//! ```
 
 extern crate regex;
 
