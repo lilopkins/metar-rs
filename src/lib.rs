@@ -101,9 +101,6 @@
 //! <digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 //! ```
 
-extern crate regex;
-
-use regex::Regex;
 
 use std::num::ParseIntError;
 
@@ -215,9 +212,9 @@ pub struct Wind {
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// A complete METAR
-pub struct Metar {
+pub struct Metar<'a> {
     /// The station making the METAR measurement
-    pub station: String,
+    pub station: &'a str,
     /// The measurement time
     pub time: Time,
     /// The current wind information
@@ -235,7 +232,7 @@ pub struct Metar {
     /// The current air pressure
     pub pressure: Pressure,
     /// Any remarks made about the METAR
-    pub remarks: Option<String>,
+    pub remarks: Option<&'a str>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -267,253 +264,29 @@ pub enum MetarError {
     InvalidMetarError(String),
 }
 
-impl Metar {
+impl<'a> Metar<'a> {
 
     /// Parse a string into a METAR
-    pub fn parse(data: String) -> Result<Self, MetarError> {
-        let mut time = Time {
+    pub fn parse(_data: &'a str) -> Result<Self, MetarError> {
+        let time = Time {
             date: 0,
             hour: 0,
             minute: 0,
         };
-        let mut wind = Wind {
+        let wind = Wind {
             dir: WindDirection::Heading(0),
             speed: WindSpeed::Knot(0),
             varying: None,
             gusting: None,
         };
-        let mut visibility = Visibility::Metres(10000);
-        let mut cloud_layers = Vec::new();
-        let mut vert_visibility = None;
-        let mut temperature = 0;
-        let mut dewpoint = 0;
-        let mut pressure = Pressure::Hectopascals(0);
-        let mut remarks = None;
-
-        let re = Regex::new(&r"(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}) )?(?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?\/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>CLR |NCD |NSC |(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?:\/\/\/|(?P<vert_visibility>[0-9]{3})) )?(?P<temperature>M?[0-9]{2})\/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?".replace("\\/", "/")).unwrap();
-
-        let parts = re.captures(&data);
-        if parts.is_none() {
-            return Err(MetarError::InvalidMetarError(data));
-        }
-        let parts = parts.unwrap();
-
-        // Parse station
-        let station = parts["station"].to_string();
-
-        // Parse time
-        let time_s = parts["time"].to_string();
-        time.date = match time_s[0..2].parse::<u8>() {
-            Ok(v) => v,
-            Err(e) => return Err(MetarError::TimeParseError(e)),
-        };
-        time.hour = match time_s[2..4].parse::<u8>() {
-            Ok(v) => v,
-            Err(e) => return Err(MetarError::TimeParseError(e)),
-        };
-        time.minute = match time_s[4..6].parse::<u8>() {
-            Ok(v) => v,
-            Err(e) => return Err(MetarError::TimeParseError(e)),
-        };
-
-        // Deal with NIL/AUTO
-        if &parts["data"] == "NIL" {
-            // NIL METAR
-            return Ok(Metar {
-                station,
-                time,
-                wind,
-                visibility,
-                cloud_layers,
-                vert_visibility,
-                temperature,
-                dewpoint,
-                pressure,
-                remarks,
-            });
-        }
-
-        // Wind
-        // Wind heading
-        let hdg = &parts["wind_dir"];
-        if hdg == "VRB" {
-            wind.dir = WindDirection::Variable;
-        } else if hdg == "ABV" {
-            wind.dir = WindDirection::Above;
-        } else {
-            wind.dir = WindDirection::Heading(match hdg.parse::<u32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::WindDirectionError(e)),
-            });
-        }
-        // Wind speed and gusting
-        let speed = match parts["wind_speed"].parse::<u32>() {
-            Ok(v) => v,
-            Err(e) => return Err(MetarError::WindSpeedError(e)),
-        };;
-        let mut gusting: Option<u32> = None;
-        if let Some(part) = parts.name("wind_gusts") {
-            gusting = Some(match part.as_str().parse::<u32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::WindGustError(e)),
-            });
-        }
-        if parts["wind_unit"].ends_with("KT") {
-            // knots
-            wind.speed = WindSpeed::Knot(speed);
-            if let Some(g) = gusting {
-                wind.gusting = Some(WindSpeed::Knot(g));
-            }
-        } else {
-            // mps
-            wind.speed = WindSpeed::MetresPerSecond(speed);
-            if let Some(g) = gusting {
-                wind.gusting = Some(WindSpeed::MetresPerSecond(g));
-            }
-        }
-
-        if let Some(part) = parts.name("wind_varying_from") {
-            // Wind varying
-            let from = match part.as_str().parse::<u32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::WindVaryingError(e)),
-            };
-            let to = match parts["wind_varying_to"].parse::<u32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::WindVaryingError(e)),
-            };
-            wind.varying = Some((from, to));
-        }
-
-        let visibility_p = &parts["visibility"];
-        if visibility_p == "CAVOK" {
-            visibility = Visibility::CavOK;
-        } else if visibility_p == "NSC" {
-            visibility = Visibility::NoSignificantClouds;
-        } else if visibility_p == "SKC"
-            || visibility_p == "CLR" {
-
-            visibility = Visibility::SkyClear;
-        } else if visibility_p.starts_with("M") {
-            if visibility_p.ends_with("SM") {
-                visibility = Visibility::LessThanStatuteMiles(match visibility_p[1..3].parse::<u32>() {
-                    Ok(v) => v,
-                    Err(e) => return Err(MetarError::VisibilityError(e)),
-                });
-            } else {
-                visibility = Visibility::LessThanMetres(match visibility_p[1..5].parse::<u32>() {
-                    Ok(v) => v,
-                    Err(e) => return Err(MetarError::VisibilityError(e)),
-                });
-            }
-        } else {
-            if visibility_p.ends_with("SM") {
-                visibility = Visibility::StatuteMiles(match visibility_p[0..2].parse::<u32>() {
-                    Ok(v) => v,
-                    Err(e) => return Err(MetarError::VisibilityError(e)),
-                });
-            } else {
-                visibility = Visibility::Metres(match visibility_p[0..4].parse::<u32>() {
-                    Ok(v) => v,
-                    Err(e) => return Err(MetarError::VisibilityError(e)),
-                });
-            }
-        }
-
-        // TODO: RVRs
-
-        // TODO: Weather
-
-        // Clouds
-        if let Some(clouds_s) = parts.name("clouds") {
-            let clouds_p: Vec<_> = clouds_s.as_str().split(" ").collect();
-            for cloud in clouds_p {
-                let part = cloud.trim();
-                if part == "NCD"
-                    || part == "NSC" {
-                    break;
-                }
-                // Cloud type
-                let mut typ = CloudType::Normal;
-                if part.ends_with("TCU") {
-                    typ = CloudType::ToweringCumulus;
-                } else if part.ends_with("CB") {
-                    typ = CloudType::Cumulonimbus;
-                }
-                // Cloud floor
-                let floor = match part[3..6].parse::<u32>() {
-                    Ok(v) => v,
-                    Err(e) => return Err(MetarError::CloudFloorError(e)),
-                };
-                // Cloud cover
-                if part.starts_with("FEW") {
-                    cloud_layers.push(CloudLayer::Few(typ, floor));
-                } else if part.starts_with("SCT") {
-                    cloud_layers.push(CloudLayer::Scattered(typ, floor));
-                } else if part.starts_with("BKN") {
-                    cloud_layers.push(CloudLayer::Broken(typ, floor));
-                } else if part.starts_with("OVC") {
-                    cloud_layers.push(CloudLayer::Overcast(typ, floor));
-                }
-            }
-        }
-
-        if let Some(part) = parts.name("vert_visibility") {
-            // Vertical visibility
-            if part.as_str() == "///" {
-                vert_visibility = Some(VertVisibility::ReducedByUnknownAmount);
-            } else {
-                vert_visibility = match part.as_str().parse::<u32>() {
-                    Ok(v) => Some(VertVisibility::Distance(v)),
-                    Err(e) => return Err(MetarError::VerticalVisibilityError(e)),
-                };
-            }
-        }
-
-        let temp = &parts["temperature"];
-        let dewp = &parts["dewpoint"];
-        if temp.starts_with("M") {
-            temperature = -1 * match temp[1..].parse::<i32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::TemperatureError(e)),
-            };
-        } else {
-            temperature = match temp.parse::<i32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::TemperatureError(e)),
-            };
-        }
-        if dewp.starts_with("M") {
-            dewpoint = -1 * match dewp[1..].parse::<i32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::DewpointError(e)),
-            };
-        } else {
-            dewpoint = match dewp.parse::<i32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::DewpointError(e)),
-            };
-        }
-
-        if parts["pressure"].starts_with("Q") {
-            // hPa pressure
-            pressure = Pressure::Hectopascals(match parts["pressure"][1..].parse::<u32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::AirPressureError(e)),
-            });
-        } else if parts["pressure"].starts_with("A") {
-            // inMg pressure
-            pressure = Pressure::InchesMercury(match parts["pressure"][1..].parse::<u32>() {
-                Ok(v) => v,
-                Err(e) => return Err(MetarError::AirPressureError(e)),
-            });
-        }
-
-        if let Some(part) = parts.name("remarks") {
-            remarks = Some(part.as_str().to_string());
-        } else {
-            remarks = None;
-        }
+        let station = "EGHI";
+        let visibility = Visibility::Metres(10000);
+        let cloud_layers = Vec::new();
+        let vert_visibility = None;
+        let temperature = 0;
+        let dewpoint = 0;
+        let pressure = Pressure::Hectopascals(0);
+        let remarks = None;
 
         Ok(Metar {
             station,
