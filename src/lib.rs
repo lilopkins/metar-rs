@@ -112,9 +112,9 @@ pub enum Visibility {
     StatuteMiles(u32),
     /// Clouds and Visibility OK (CAVOK)
     CavOK,
-    /// No significant clouds
+    /// No significant clouds (NSC)
     NoSignificantClouds,
-    /// Sky clear, no clouds
+    /// Sky clear, no clouds (SKC or CLR)
     SkyClear,
 }
 
@@ -765,5 +765,61 @@ mod tests {
         assert_eq!(r.dewpoint, -3);
 
         assert_eq!(r.pressure, super::Pressure::InchesMercury(3029));
+    }
+
+    #[test]
+    fn test_metar_11() {
+        let metar = "KLAX 061853Z 26007KT 5SM BR SCT006 BKN013 19/13 A3000 RMK AO2 SLP158 T01890133 $".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "KLAX");
+
+        assert_eq!(r.time.date, 06);
+        assert_eq!(r.time.hour, 18);
+        assert_eq!(r.time.minute, 53);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Heading(260));
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(7));
+        assert_eq!(r.wind.gusting, None);
+        assert_eq!(r.wind.varying, None);
+
+        assert_eq!(r.visibility, super::Visibility::StatuteMiles(5));
+
+        assert_eq!(r.temperature, 19);
+        assert_eq!(r.dewpoint, 13);
+
+        assert_eq!(r.pressure, super::Pressure::InchesMercury(3000));
+    }
+
+    #[test]
+    fn test_metar_12() {
+        let metar = "EGGD 061920Z AUTO 14007KT 9999 SCT035/// //////CB 07/06 Q0997".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "EGGD");
+
+        assert_eq!(r.time.date, 06);
+        assert_eq!(r.time.hour, 19);
+        assert_eq!(r.time.minute, 20);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Heading(140));
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(7));
+        assert_eq!(r.wind.gusting, None);
+        assert_eq!(r.wind.varying, None);
+
+        assert_eq!(r.visibility, super::Visibility::Metres(9999));
+
+        assert_eq!(r.temperature, 7);
+        assert_eq!(r.dewpoint, 6);
+
+        assert_eq!(r.pressure, super::Pressure::InchesMercury(997));
     }
 }
