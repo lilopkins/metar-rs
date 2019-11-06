@@ -59,7 +59,7 @@
 //!
 //! A (Perl-compatible) Regular expression reading a METAR could look like this:
 //!
-//! `(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}))? (?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?\/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>NCD|(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?P<vert_visibility>[0-9]{3}) )?(?P<temperature>M?[0-9]{2})\/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?$`
+//! `(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}) )?(?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?\/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>CLR |NCD |NSC |(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?:\/\/\/|(?P<vert_visibility>[0-9]{3})) )?(?P<temperature>M?[0-9]{2})\/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?`
 //!
 
 extern crate regex;
@@ -251,7 +251,7 @@ impl Metar {
         let mut pressure = Pressure::Hectopascals(0);
         let mut remarks = None;
 
-        let re = Regex::new(r"(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}) )?(?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>NCD |NSC |(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?:///|(?P<vert_visibility>[0-9]{3})) )?(?P<temperature>M?[0-9]{2})/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?").unwrap();
+        let re = Regex::new(&r"(?P<station>[A-Z0-9]{4}) (?P<time>[0-9]{6}Z) (?P<data>NIL|(?:AUTO )?(?P<wind_dir>[0-9]{3}|VRB|ABV)(?P<wind_speed>[0-9]{2})(?:G(?P<wind_gusts>[0-9]{2}))?(?P<wind_unit>KT|MPS) (?:(?P<wind_varying_from>[0-9]{3})V(?P<wind_varying_to>[0-9]{3}) )?(?P<visibility>CAVOK|NSC|SKC|M?[0-9]{2}SM|M?[0-9]{4}) (?P<rvr>(?:R[0-9]{2}[LCR]?\/[PM]?[0-9]{4}(?:V[0-9]{4})?[DUN]? )*)(?P<wx>(?:(?:VC|\-|\+)?(?:TS|SH|FZ|BL|DR|MI|BC|PR|DZ|RA|SN|SG|PL|IC|GR|GS|UP|FG|BR|SA|DU|HZ|FU|VA|PO|SQ|FC|DS|SS) ?)*)(?P<cloud>CLR |NCD |NSC |(?:(?:FEW|SCT|BKN|OVC)[0-9]{3}(?:CB|TCU)? )*)(?:VV(?:\/\/\/|(?P<vert_visibility>[0-9]{3})) )?(?P<temperature>M?[0-9]{2})\/(?P<dewpoint>M?[0-9]{2}) (?P<pressure>(?:Q|A)[0-9]{4}))(?: RMK (?P<remarks>.*))?".replace("\\/", "/")).unwrap();
 
         let parts = re.captures(&data);
         if parts.is_none() {
@@ -351,7 +351,9 @@ impl Metar {
             visibility = Visibility::CavOK;
         } else if visibility_p == "NSC" {
             visibility = Visibility::NoSignificantClouds;
-        } else if visibility_p == "SKC" {
+        } else if visibility_p == "SKC"
+            || visibility_p == "CLR" {
+
             visibility = Visibility::SkyClear;
         } else if visibility_p.starts_with("M") {
             if visibility_p.ends_with("SM") {
@@ -735,5 +737,33 @@ mod tests {
         assert_eq!(r.dewpoint, 10);
 
         assert_eq!(r.pressure, super::Pressure::Hectopascals(1003));
+    }
+
+    #[test]
+    fn test_metar_10() {
+        let metar = "KEEN 061356Z AUTO 00000KT 10SM CLR 06/M03 A3029 RMK AO2 SLP264 T00611028 $".to_string();
+        let r = super::Metar::parse(metar).unwrap_or_else(|e| {
+            eprintln!("{:#?}", e);
+            assert!(false);
+            std::process::exit(1);
+        });
+
+        assert_eq!(r.station, "KEEN");
+
+        assert_eq!(r.time.date, 06);
+        assert_eq!(r.time.hour, 13);
+        assert_eq!(r.time.minute, 56);
+
+        assert_eq!(r.wind.dir, super::WindDirection::Heading(0));
+        assert_eq!(r.wind.speed, super::WindSpeed::Knot(0));
+        assert_eq!(r.wind.gusting, None);
+        assert_eq!(r.wind.varying, None);
+
+        assert_eq!(r.visibility, super::Visibility::StatuteMiles(10));
+
+        assert_eq!(r.temperature, 6);
+        assert_eq!(r.dewpoint, -3);
+
+        assert_eq!(r.pressure, super::Pressure::InchesMercury(3029));
     }
 }
