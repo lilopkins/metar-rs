@@ -43,7 +43,7 @@ A METAR can be defined with the following Backus-Naur Form description:
 
 <wind> ::= <wind_dir><digit><digit><wind_gusts> 'KT'
 	     | <wind_dir><digit><digit><wind_gusts> 'MPS'
-<wind_dir> ::= <angle> | 'VRB'
+<wind_dir> ::= <angle> | 'VRB' | ''
 <wind_gusts> ::= '' | 'G' <digit><digit>
 
 <wind_varying> ::= '' | <angle> 'V' <angle> ' '
@@ -54,6 +54,7 @@ A METAR can be defined with the following Backus-Naur Form description:
 
 <cloudsvis> ::= 'CAVOK' | <visibility> <rvr> <weather> <clouds>
 <visibility> ::= <digit><digit><digit><digit> | <digit><digit> 'SM'
+			   | 'M' <digit><digit><digit><digit> | 'M' <digit><digit> 'SM'
 <clouds> ::= 'CLR' | 'SKC' | 'NCD' | 'NSC' | <cloud_description_list> | <vertical_visibility>
 <rvr> ::= <rvr_entry> | <rvr_entry><rvr>
 <rvr_entry> ::= 'R' <runway_number> '/' <rvr_vis> <rvr_trend>
@@ -71,7 +72,7 @@ A METAR can be defined with the following Backus-Naur Form description:
 <vertical_visibility> ::= 'VV' <vertical_visibility_distance>
 <vertical_visibility_distance> ::= '///' | <digit><digit>
 
-<weather> ::= <weather_cond> | <weather_cond> <weather>
+<weather> ::= '' | <weather_cond> | <weather_cond> <weather>
 <weather_cond> ::= <weather_intesity><weather_descriptor><weather_preceipitation>
 				 | <weather_obscuration>
 				 | <weather_other>

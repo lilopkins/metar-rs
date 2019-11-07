@@ -55,6 +55,13 @@ pub mod errors {
     }
 
     #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+    /// An error caused when parsing the cloud and visibility information
+    pub enum CloudVisibilityError {
+        /// The data parsing was attempted upon is unknown in type
+        UnknownData,
+    }
+
+    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
     /// An error caused when parsing the temperature
     pub enum TemperatureError {
         /// The temperature is not valid
@@ -117,6 +124,14 @@ pub mod errors {
         }
     }
 
+    impl fmt::Display for CloudVisibilityError {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::UnknownData => write!(f, "Unknown data for parsing."),
+            }
+        }
+    }
+
     impl fmt::Display for TemperatureError {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
@@ -138,6 +153,16 @@ pub mod errors {
 }
 
 use errors::*;
+
+pub enum CloudVisibilityInfo<'a> {
+    VerticalVisibility(VertVisibility),
+    Visibility(Visibility),
+    // TODO: Fully add RVRs
+    RVR(&'a str, Visibility, bool),
+    Weather(),
+    Clouds(Clouds),
+    CloudLayer(CloudLayer),
+}
 
 pub fn parse_station<'a>(s: &'a str) -> ParserResult<&'a str, StationError> {
     if s.len() != 4 {
@@ -319,6 +344,101 @@ pub fn parse_wind_varying<'a>(s: &'a str) -> ParserResult<(u32, u32), WindVaryin
         }
         return Ok((heading_from, heading_to));
     }
+}
+
+pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibilityInfo, CloudVisibilityError> {
+    if s == "CAVOK" {
+        return Ok(CloudVisibilityInfo::Visibility(Visibility::CavOK));
+    }
+
+    // Simple Cloud States
+    if s == "CLR"
+        || s == "SKC"{
+
+        return Ok(CloudVisibilityInfo::Clouds(Clouds::SkyClear));
+    }
+    if s == "NCD" {
+        return Ok(CloudVisibilityInfo::Clouds(Clouds::NoCloudDetected));
+    }
+    if s == "NSC" {
+        return Ok(CloudVisibilityInfo::Clouds(Clouds::NoSignificantCloud));
+    }
+
+    let chs: Vec<_> = s.chars().collect();
+
+    // Cloud layers
+    if &s[0..3] == "FEW"
+        || &s[0..3] == "SCT"
+        || &s[0..3] == "BKN"
+        || &s[0..3] == "OVC"
+        || &s[0..3] == "///" {
+
+        let mut cloud_type = CloudType::Normal;
+        if s.len() > 6 {
+            let t = &s[6..];
+            if t == "TCU" {
+                cloud_type = CloudType::ToweringCumulus;
+            } else if t == "CB" {
+                cloud_type = CloudType::Cumulonimbus;
+            } else if t == "///" {
+                cloud_type = CloudType::Unknown;
+            }
+        }
+
+        let mut cloud_floor = None;
+        if let Ok(floor) = s[3..6].parse() {
+            cloud_floor = Some(floor);
+        }
+
+        let cl;
+        if &s[0..3] == "FEW" {
+            cl = CloudLayer::Few(cloud_type, cloud_floor);
+        } else if &s[0..3] == "SCT" {
+            cl = CloudLayer::Scattered(cloud_type, cloud_floor);
+        } else if &s[0..3] == "BKN" {
+            cl = CloudLayer::Broken(cloud_type, cloud_floor);
+        } else if &s[0..3] == "OVC" {
+            cl = CloudLayer::Overcast(cloud_type, cloud_floor);
+        } else {
+            cl = CloudLayer::Unknown(cloud_type, cloud_floor);
+        }
+
+        return Ok(CloudVisibilityInfo::CloudLayer(cl));
+    }
+
+    // RVR
+    if chs[0] == 'R' {
+
+    }
+
+    // Vertical visibility
+    if chs[0] == 'V' && chs[1] == 'V' {
+        if chs[2].is_digit(10) && chs[3].is_digit(10) {
+            return Ok(CloudVisibilityInfo::VerticalVisibility(VertVisibility::Distance(s[2..3].parse().unwrap())));
+        } else {
+            return Ok(CloudVisibilityInfo::VerticalVisibility(VertVisibility::ReducedByUnknownAmount));
+        }
+    }
+
+    // Visibility
+    if chs[0].is_digit(10)
+        && chs[1].is_digit(10)
+        && chs[2].is_digit(10)
+        && chs[3].is_digit(10) {
+
+        return Ok(CloudVisibilityInfo::Visibility(Visibility::Metres(s[0..4].parse().unwrap())));
+    }
+    if chs[0].is_digit(10)
+        && chs[1].is_digit(10)
+        && chs[2] == 'S'
+        && chs[3] == 'M' {
+
+        return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(s[0..2].parse().unwrap())));
+    }
+
+    // Weather
+
+    return Err((0, s.len(), CloudVisibilityError::UnknownData));
 }
 
 pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(i32, i32), TemperatureError> {

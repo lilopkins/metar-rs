@@ -118,7 +118,9 @@ pub struct Metar<'a> {
     pub wind: Wind,
     /// The current visibility
     pub visibility: Visibility,
-    /// The current cloud layers
+    /// The current clouds
+    pub clouds: Clouds,
+    /// The current clouds
     pub cloud_layers: Vec<CloudLayer>,
     /// The current vertical visibility, in feet
     pub vert_visibility: Option<VertVisibility>,
@@ -173,6 +175,7 @@ impl fmt::Display for ParserError {
             Self::ObservationTime(e) => write!(f, "{}", e),
             Self::Wind(e) => write!(f, "{}", e),
             Self::WindVarying(e) => write!(f, "{}", e),
+            Self::CloudVisibility(e) => write!(f, "{}", e),
             Self::Temperature(e) => write!(f, "{}", e),
             Self::Pressure(e) => write!(f, "{}", e),
         }
@@ -190,6 +193,8 @@ pub enum ParserError {
     Wind(WindError),
     /// An error from the wind varying parser
     WindVarying(WindVaryingError),
+    /// An error from the cloud/visibility parser
+    CloudVisibility(CloudVisibilityError),
     /// An error from the temperature parser
     Temperature(TemperatureError),
     /// An error from the pressure parser
@@ -262,7 +267,8 @@ impl<'a> Metar<'a> {
                 gusting: None,
             },
             visibility: Visibility::Metres(10000),
-            cloud_layers: vec![],
+            clouds: Clouds::SkyClear,
+            cloud_layers: Vec::new(),
             vert_visibility: None,
             temperature: 0,
             dewpoint: 0,
@@ -281,8 +287,7 @@ impl<'a> Metar<'a> {
                     if let Ok(data) = r {
                         metar.station = data;
                         state = ParseState::ObservationTime;
-                    } else {
-                        let e = r.unwrap_err();
+                    } else if let Err(e) = r {
                         return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
                             state, ParserError::Station(e.2)));
                     }
@@ -292,8 +297,7 @@ impl<'a> Metar<'a> {
                     if let Ok(data) = r {
                         metar.time = data;
                         state = ParseState::MethodOrWind;
-                    } else {
-                        let e = r.unwrap_err();
+                    } else if let Err(e) = r {
                         return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
                             state, ParserError::ObservationTime(e.2)));
                     }
@@ -307,8 +311,7 @@ impl<'a> Metar<'a> {
                     if let Ok(data) = r {
                         metar.wind = data;
                         state = ParseState::WindVaryingOrCloudsVis;
-                    } else {
-                        let e = r.unwrap_err();
+                    } else if let Err(e) = r {
                         return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
                             state, ParserError::Wind(e.2)));
                     }
@@ -319,12 +322,37 @@ impl<'a> Metar<'a> {
                     if let Ok(data) = r {
                         metar.wind.varying = Some(data);
                         state = ParseState::CloudVisOrTemps;
-                    } else {
-                        let e = r.unwrap_err();
-
+                    } else if let Err(e) = r {
                         if let (_s, _l, WindVaryingError::NotWindVarying) = e {
-                            // Treat as cloud/vis info
-                            // TODO: Parse this
+                            // Parse cloud/vis data
+                            let r = parsers::parse_cloud_visibility_info(word);
+                            if let Ok(data) = r {
+                                match data {
+                                    parsers::CloudVisibilityInfo::CloudLayer(layer) => {
+                                        metar.clouds = Clouds::CloudLayers;
+                                        metar.cloud_layers.push(layer);
+                                    },
+                                    parsers::CloudVisibilityInfo::Clouds(clouds) => {
+                                        metar.clouds = clouds;
+                                    },
+                                    parsers::CloudVisibilityInfo::RVR(..) => {
+
+                                    },
+                                    parsers::CloudVisibilityInfo::VerticalVisibility(vv) => {
+                                        metar.vert_visibility = Some(vv);
+                                    },
+                                    parsers::CloudVisibilityInfo::Visibility(visibility) => {
+                                        metar.visibility = visibility;
+                                    },
+                                    parsers::CloudVisibilityInfo::Weather() => {
+
+                                    },
+                                };
+                            } else if let Err(e) = r {
+                                return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                                    state, ParserError::CloudVisibility(e.2)));
+                            }
+
                             state = ParseState::CloudVisOrTemps;
                             continue;
                         } else {
@@ -340,12 +368,36 @@ impl<'a> Metar<'a> {
                         metar.temperature = data.0;
                         metar.dewpoint = data.1;
                         state = ParseState::Pressure;
-                    } else {
-                        let e = r.unwrap_err();
-
+                    } else if let Err(e) = r {
                         if let (_s, _l, TemperatureError::NotTemperatureDewpointPair) = e {
-                            // Treat as cloud/vis info
-                            // TODO: Parse this
+                            let r = parsers::parse_cloud_visibility_info(word);
+                            if let Ok(data) = r {
+                                match data {
+                                    parsers::CloudVisibilityInfo::CloudLayer(layer) => {
+                                        metar.clouds = Clouds::CloudLayers;
+                                        metar.cloud_layers.push(layer);
+                                    },
+                                    parsers::CloudVisibilityInfo::Clouds(clouds) => {
+                                        metar.clouds = clouds;
+                                    },
+                                    parsers::CloudVisibilityInfo::RVR(..) => {
+
+                                    },
+                                    parsers::CloudVisibilityInfo::VerticalVisibility(vv) => {
+                                        metar.vert_visibility = Some(vv);
+                                    },
+                                    parsers::CloudVisibilityInfo::Visibility(visibility) => {
+                                        metar.visibility = visibility;
+                                    },
+                                    parsers::CloudVisibilityInfo::Weather() => {
+
+                                    },
+                                };
+                            } else if let Err(e) = r {
+                                return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                                    state, ParserError::CloudVisibility(e.2)));
+                            }
+
                             state = ParseState::CloudVisOrTemps;
                             continue;
                         } else {
@@ -359,8 +411,7 @@ impl<'a> Metar<'a> {
                     if let Ok(data) = r {
                         metar.pressure = data;
                         state = ParseState::RemarksOrEnd;
-                    } else {
-                        let e = r.unwrap_err();
+                    } else if let Err(e) = r {
                         return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
                             state, ParserError::Pressure(e.2)));
                     }

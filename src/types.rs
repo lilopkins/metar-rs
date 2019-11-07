@@ -42,10 +42,6 @@ pub enum Visibility {
     StatuteMiles(u32),
     /// Clouds and Visibility OK (CAVOK)
     CavOK,
-    /// No significant clouds (NSC)
-    NoSignificantClouds,
-    /// Sky clear, no clouds (SKC or CLR)
-    SkyClear,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -68,16 +64,31 @@ pub enum VertVisibility {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
+/// Cloud state
+pub enum Clouds {
+    /// The sky is clear - also set from CavOK
+    SkyClear,
+    /// No cloud was detected
+    NoCloudDetected,
+    /// No significant cloud was detected below 5000ft
+    NoSignificantCloud,
+    /// Layers of cloud, described elsewhere
+    CloudLayers,
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
 /// Cloud cover
 pub enum CloudLayer {
     /// Few clouds (1/8)
-    Few(CloudType, u32),
+    Few(CloudType, Option<u32>),
     /// Scattered cloud cover (3/8)
-    Scattered(CloudType, u32),
+    Scattered(CloudType, Option<u32>),
     /// Broken cloud cover (5/8)
-    Broken(CloudType, u32),
+    Broken(CloudType, Option<u32>),
     /// Overcast cloud cover (7/8)
-    Overcast(CloudType, u32),
+    Overcast(CloudType, Option<u32>),
+    /// Cloud cover of an unknown density
+    Unknown(CloudType, Option<u32>),
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -89,6 +100,8 @@ pub enum CloudType {
     Cumulonimbus,
     /// A towering cumulus cloud
     ToweringCumulus,
+    /// An unknown cloud type
+    Unknown,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
