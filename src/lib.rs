@@ -101,11 +101,11 @@
 //! <digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 //! ```
 
-
-use std::num::ParseIntError;
 mod types;
-
+mod parsers;
+use std::fmt;
 pub use types::*;
+pub use parsers::errors::*;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// A complete METAR
@@ -134,68 +134,255 @@ pub struct Metar<'a> {
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// An error when parsing a METAR
-pub enum MetarError {
-    /// An error whilst parsing time
-    TimeParseError(ParseIntError),
-    /// An error parsing wind direction
-    WindDirectionError(ParseIntError),
-    /// An error parsing wind speed
-    WindSpeedError(ParseIntError),
-    /// An error parsing how the winds are gusting
-    WindGustError(ParseIntError),
-    /// An error parsing the wind directional variation
-    WindVaryingError(ParseIntError),
-    /// An error parsing the current horizontal visibility
-    VisibilityError(ParseIntError),
-    /// An error in parsing the cloud layer floor
-    CloudFloorError(ParseIntError),
-    /// An error parsing the vertical visibility
-    VerticalVisibilityError(ParseIntError),
-    /// An error parsing the current barometric pressure
-    AirPressureError(ParseIntError),
-    /// An error parsing the current temperature
-    TemperatureError(ParseIntError),
-    /// An error parsing the current dewpoint
-    DewpointError(ParseIntError),
-    /// This METAR doesn't conform to the standard and so cannot be parsed
-    InvalidMetarError(String),
+pub struct MetarError<'a> {
+    /// The string being parsed
+    pub string: &'a str,
+    /// The start index of the error
+    pub start: usize,
+    /// The length of the error'd section
+    pub length: usize,
+    /// The current parser state (what it was expecting to read)
+    pub parser_state: ParseState,
+    /// The error from the internal parser
+    pub error: ParserError,
+}
+
+impl<'a> MetarError<'a> {
+    fn new(string: &'a str, start: usize, length: usize,
+                parser_state: ParseState, error: ParserError) -> Self {
+        Self {
+            string, start, length, parser_state, error,
+        }
+    }
+}
+
+impl<'a> fmt::Display for MetarError<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut caret = String::new();
+        for _ in 0..self.start { caret.push(' '); }
+        caret.push('^');
+        for _ in 1..self.length { caret.push('~'); }
+        write!(f, "{}\n{}\n{}", self.string, caret, self.error)
+    }
+}
+
+impl fmt::Display for ParserError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Station(e) => write!(f, "{}", e),
+            Self::ObservationTime(e) => write!(f, "{}", e),
+            Self::Wind(e) => write!(f, "{}", e),
+            Self::WindVarying(e) => write!(f, "{}", e),
+            Self::Temperature(e) => write!(f, "{}", e),
+            Self::Pressure(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Clone, Debug)]
+/// An error from an internal parser
+pub enum ParserError {
+    /// An error from the station parser
+    Station(StationError),
+    /// An error from the observation time parser
+    ObservationTime(ObservationTimeError),
+    /// An error from the wind parser
+    Wind(WindError),
+    /// An error from the wind varying parser
+    WindVarying(WindVaryingError),
+    /// An error from the temperature parser
+    Temperature(TemperatureError),
+    /// An error from the pressure parser
+    Pressure(PressureError),
+}
+
+/// Find the words in a string by splitting into an array of usize tuples with the start index and
+/// length of each word
+fn find_words<'a>(s: &'a str) -> Vec<(usize, usize)> {
+    let mut words = Vec::new();
+    let chs: Vec<_> = s.chars().collect();
+    let mut start_idx = 0;
+    let mut last_read_ws = false;
+    let len = chs.len();
+    for i in 0..len {
+        if chs[i].is_whitespace() && !last_read_ws {
+            last_read_ws = true;
+            words.push((start_idx, i - start_idx));
+        }
+        if !chs[i].is_whitespace() {
+            if last_read_ws {
+                start_idx = i;
+            }
+            last_read_ws = false;
+        }
+    }
+
+    if !last_read_ws {
+        words.push((start_idx, len - start_idx));
+    }
+
+    words
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+/// The state of the parser, used in error messages to describe the expected next occurence when it
+/// wasn't reached.
+pub enum ParseState {
+    /// Expected an ICAO station
+    Station,
+    /// Expected an observation time
+    ObservationTime,
+    /// Expected either a recording method ('AUTO') or wind information
+    MethodOrWind,
+    /// Expected information about wind variation or cloud and visibility information
+    WindVaryingOrCloudsVis,
+    /// Expected cloud and visibility information or temperatures
+    CloudVisOrTemps,
+    /// Expected air pressure
+    Pressure,
+    /// Expected either remarks or the METAR end
+    RemarksOrEnd,
 }
 
 impl<'a> Metar<'a> {
 
     /// Parse a string into a METAR
-    pub fn parse(_data: &'a str) -> Result<Self, MetarError> {
-        let time = Time {
-            date: 0,
-            hour: 0,
-            minute: 0,
+    pub fn parse(data: &'a str) -> Result<Self, MetarError> {
+        let mut metar = Metar {
+            station: "XXXX",
+            time: Time {
+                date: 0,
+                hour: 0,
+                minute: 0,
+            },
+            wind: Wind {
+                dir: WindDirection::Heading(0),
+                speed: WindSpeed::Knot(0),
+                varying: None,
+                gusting: None,
+            },
+            visibility: Visibility::Metres(10000),
+            cloud_layers: vec![],
+            vert_visibility: None,
+            temperature: 0,
+            dewpoint: 0,
+            pressure: Pressure::Hectopascals(0),
+            remarks: None,
         };
-        let wind = Wind {
-            dir: WindDirection::Heading(0),
-            speed: WindSpeed::Knot(0),
-            varying: None,
-            gusting: None,
-        };
-        let station = "EGHI";
-        let visibility = Visibility::Metres(10000);
-        let cloud_layers = Vec::new();
-        let vert_visibility = None;
-        let temperature = 0;
-        let dewpoint = 0;
-        let pressure = Pressure::Hectopascals(0);
-        let remarks = None;
 
-        Ok(Metar {
-            station,
-            time,
-            wind,
-            visibility,
-            cloud_layers,
-            vert_visibility,
-            temperature,
-            dewpoint,
-            pressure,
-            remarks,
-        })
+        let mut state = ParseState::Station;
+        let words = find_words(data);
+        for word_idx in words {
+            let word = &data[word_idx.0..word_idx.0 + word_idx.1];
+
+            match state {
+                ParseState::Station => {
+                    let r = parsers::parse_station(word);
+                    if let Ok(data) = r {
+                        metar.station = data;
+                        state = ParseState::ObservationTime;
+                    } else {
+                        let e = r.unwrap_err();
+                        return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                            state, ParserError::Station(e.2)));
+                    }
+                },
+                ParseState::ObservationTime => {
+                    let r = parsers::parse_obs_time(word);
+                    if let Ok(data) = r {
+                        metar.time = data;
+                        state = ParseState::MethodOrWind;
+                    } else {
+                        let e = r.unwrap_err();
+                        return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                            state, ParserError::ObservationTime(e.2)));
+                    }
+                },
+                ParseState::MethodOrWind => {
+                    if word == "AUTO" {
+                        // Method - just ignore for now
+                        continue;
+                    }
+                    let r = parsers::parse_wind(word);
+                    if let Ok(data) = r {
+                        metar.wind = data;
+                        state = ParseState::WindVaryingOrCloudsVis;
+                    } else {
+                        let e = r.unwrap_err();
+                        return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                            state, ParserError::Wind(e.2)));
+                    }
+                },
+                ParseState::WindVaryingOrCloudsVis => {
+                    // Treat as wind varying
+                    let r = parsers::parse_wind_varying(word);
+                    if let Ok(data) = r {
+                        metar.wind.varying = Some(data);
+                        state = ParseState::CloudVisOrTemps;
+                    } else {
+                        let e = r.unwrap_err();
+
+                        if let (_s, _l, WindVaryingError::NotWindVarying) = e {
+                            // Treat as cloud/vis info
+                            // TODO: Parse this
+                            state = ParseState::CloudVisOrTemps;
+                            continue;
+                        } else {
+                            return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                                state, ParserError::WindVarying(e.2)));
+                        }
+                    }
+                },
+                ParseState::CloudVisOrTemps => {
+                    // Treat as temperatures
+                    let r = parsers::parse_temperatures(word);
+                    if let Ok(data) = r {
+                        metar.temperature = data.0;
+                        metar.dewpoint = data.1;
+                        state = ParseState::Pressure;
+                    } else {
+                        let e = r.unwrap_err();
+
+                        if let (_s, _l, TemperatureError::NotTemperatureDewpointPair) = e {
+                            // Treat as cloud/vis info
+                            // TODO: Parse this
+                            state = ParseState::CloudVisOrTemps;
+                            continue;
+                        } else {
+                            return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                                state, ParserError::Temperature(e.2)));
+                        }
+                    }
+                },
+                ParseState::Pressure => {
+                    let r = parsers::parse_pressure(word);
+                    if let Ok(data) = r {
+                        metar.pressure = data;
+                        state = ParseState::RemarksOrEnd;
+                    } else {
+                        let e = r.unwrap_err();
+                        return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                            state, ParserError::Pressure(e.2)));
+                    }
+                },
+                ParseState::RemarksOrEnd => {
+                    metar.remarks = Some(&data[word_idx.0..]);
+                    break;
+                },
+            }
+        }
+
+        Ok(metar)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_words() {
+        let r = find_words("The quick brown fox.");
+        assert_eq!(r, [(0, 3), (4, 5), (10, 5), (16, 4)]);
     }
 }
