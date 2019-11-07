@@ -327,5 +327,5 @@ fn test_metar_12() {
     assert_eq!(r.temperature, 7);
     assert_eq!(r.dewpoint, 6);
 
-    assert_eq!(r.pressure, Pressure::InchesMercury(997));
+    assert_eq!(r.pressure, Pressure::Hectopascals(997));
 }
