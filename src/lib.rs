@@ -10,7 +10,7 @@
 //! extern crate metar;
 //!
 //! fn main() {
-//!     let metar = "EGHI 282120Z 19015KT 140V220 6000 RA SCT006 BKN009 16/14 Q1006".to_string();
+//!     let metar = "EGHI 282120Z 19015KT 140V220 6000 RA SCT006 BKN009 16/14 Q1006";
 //!     let r = metar::Metar::parse(metar).unwrap();
 //!     println!("{:#?}", r);
 //! }
@@ -26,7 +26,7 @@
 //!
 //! A METAR can be defined with the following Backus-Naur Form description:
 //!
-//! ```
+//! ```bnf
 //! <metar> ::= <station> ' ' <observationtime> ' ' <method> ' ' <wind> ' ' <wind_varying> <cloudsvis> ' ' <temps> ' ' <pressure> <remark>
 //!
 //! <station> ::= <letter><letter><letter><letter>
@@ -343,6 +343,7 @@ impl<'a> Metar<'a> {
                                     },
                                     parsers::CloudVisibilityInfo::VerticalVisibility(vv) => {
                                         metar.vert_visibility = Some(vv);
+                                        metar.clouds = Clouds::Undetermined;
                                     },
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
                                         metar.visibility = visibility;
@@ -388,6 +389,7 @@ impl<'a> Metar<'a> {
                                     },
                                     parsers::CloudVisibilityInfo::VerticalVisibility(vv) => {
                                         metar.vert_visibility = Some(vv);
+                                        metar.clouds = Clouds::Undetermined;
                                     },
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
                                         metar.visibility = visibility;
