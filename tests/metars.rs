@@ -410,3 +410,40 @@ fn test_metar_12() {
     assert_eq!(r.pressure, Pressure::Hectopascals(997));
     assert_eq!(r.remarks, None);
 }
+
+#[test]
+fn test_metar_13() {
+    let metar = "EGSS 081750Z AUTO 31006KT 280V360 7000 -RA BKN007 BKN012 BKN019 06/05 Q1009";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+
+    assert_eq!(r.station, "EGSS");
+    assert_eq!(r.time.date, 08);
+    assert_eq!(r.time.hour, 17);
+    assert_eq!(r.time.minute, 50);
+    assert_eq!(r.wind.dir, WindDirection::Heading(310));
+    assert_eq!(r.wind.speed, WindSpeed::Knot(6));
+    assert_eq!(r.wind.varying, Some((280, 360)));
+    assert_eq!(r.wind.gusting, None);
+    assert_eq!(r.visibility, Visibility::Metres(7000));
+    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.cloud_layers.len(), 3);
+    assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(7))));
+    assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(12))));
+    assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(19))));
+    assert_eq!(r.vert_visibility, None);
+    assert_eq!(r.weather.len(), 1);
+    assert!(r.weather.contains(&Weather {
+        intensity: WeatherIntensity::Light,
+        conditions: vec![
+            WeatherCondition::Rain,
+        ],
+    }));
+    assert_eq!(r.temperature, 6);
+    assert_eq!(r.dewpoint, 5);
+    assert_eq!(r.pressure, Pressure::Hectopascals(1009));
+    assert_eq!(r.remarks, None);
+}

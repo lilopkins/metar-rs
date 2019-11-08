@@ -268,7 +268,7 @@ pub fn parse_wind<'a>(s: &'a str) -> ParserResult<Wind, WindError> {
         return Err((2, 1, WindError::HeadingNotValid));
     } else {
         let heading = s[0..3].parse().unwrap();
-        if heading >= 360 {
+        if heading > 360 {
             return Err((0, 3, WindError::HeadingNotValid));
         }
         wind.dir = WindDirection::Heading(heading);
@@ -340,10 +340,10 @@ pub fn parse_wind_varying<'a>(s: &'a str) -> ParserResult<(u32, u32), WindVaryin
     } else {
         let heading_from = s[0..3].parse().unwrap();
         let heading_to = s[4..7].parse().unwrap();
-        if heading_from >= 360 {
+        if heading_from > 360 {
             return Err((0, 3, WindVaryingError::HeadingNotValid));
         }
-        if heading_to >= 360 {
+        if heading_to > 360 {
             return Err((4, 3, WindVaryingError::HeadingNotValid));
         }
         return Ok((heading_from, heading_to));
