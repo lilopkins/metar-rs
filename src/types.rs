@@ -74,6 +74,8 @@ pub enum Clouds {
     NoSignificantCloud,
     /// Layers of cloud, described elsewhere
     CloudLayers,
+    /// Only used when vertical visibility is set.
+    Undetermined,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

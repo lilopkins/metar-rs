@@ -154,11 +154,11 @@ pub mod errors {
 
 use errors::*;
 
-pub enum CloudVisibilityInfo<'a> {
+pub enum CloudVisibilityInfo {
     VerticalVisibility(VertVisibility),
     Visibility(Visibility),
     // TODO: Fully add RVRs
-    RVR(&'a str, Visibility, bool),
+    RVR(),
     Weather(Weather),
     Clouds(Clouds),
     CloudLayer(CloudLayer),
@@ -317,6 +317,10 @@ pub fn parse_wind<'a>(s: &'a str) -> ParserResult<Wind, WindError> {
 pub fn parse_wind_varying<'a>(s: &'a str) -> ParserResult<(u32, u32), WindVaryingError> {
     let chs: Vec<_> = s.chars().collect();
 
+    if s.len() != 7 {
+        return Err((0, s.len(), WindVaryingError::NotWindVarying));
+    }
+
     if chs[3] != 'V' {
         return Err((3, 1, WindVaryingError::NotWindVarying));
     }
@@ -367,48 +371,51 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     let chs: Vec<_> = s.chars().collect();
 
     // Cloud layers
-    if &s[0..3] == "FEW"
-        || &s[0..3] == "SCT"
-        || &s[0..3] == "BKN"
-        || &s[0..3] == "OVC"
-        || &s[0..3] == "///" {
+    if s.len() >= 6 {
+        if &s[0..3] == "FEW"
+            || &s[0..3] == "SCT"
+            || &s[0..3] == "BKN"
+            || &s[0..3] == "OVC"
+            || &s[0..3] == "///" {
 
-        let mut cloud_type = CloudType::Normal;
-        if s.len() > 6 {
-            let t = &s[6..];
-            if t == "TCU" {
-                cloud_type = CloudType::ToweringCumulus;
-            } else if t == "CB" {
-                cloud_type = CloudType::Cumulonimbus;
-            } else if t == "///" {
-                cloud_type = CloudType::Unknown;
+            let mut cloud_type = CloudType::Normal;
+            if s.len() > 6 {
+                let t = &s[6..];
+                if t == "TCU" {
+                    cloud_type = CloudType::ToweringCumulus;
+                } else if t == "CB" {
+                    cloud_type = CloudType::Cumulonimbus;
+                } else if t == "///" {
+                    cloud_type = CloudType::Unknown;
+                }
             }
-        }
 
-        let mut cloud_floor = None;
-        if let Ok(floor) = s[3..6].parse() {
-            cloud_floor = Some(floor);
-        }
+            let mut cloud_floor = None;
+            if let Ok(floor) = s[3..6].parse() {
+                cloud_floor = Some(floor);
+            }
 
-        let cl;
-        if &s[0..3] == "FEW" {
-            cl = CloudLayer::Few(cloud_type, cloud_floor);
-        } else if &s[0..3] == "SCT" {
-            cl = CloudLayer::Scattered(cloud_type, cloud_floor);
-        } else if &s[0..3] == "BKN" {
-            cl = CloudLayer::Broken(cloud_type, cloud_floor);
-        } else if &s[0..3] == "OVC" {
-            cl = CloudLayer::Overcast(cloud_type, cloud_floor);
-        } else {
-            cl = CloudLayer::Unknown(cloud_type, cloud_floor);
-        }
+            let cl;
+            if &s[0..3] == "FEW" {
+                cl = CloudLayer::Few(cloud_type, cloud_floor);
+            } else if &s[0..3] == "SCT" {
+                cl = CloudLayer::Scattered(cloud_type, cloud_floor);
+            } else if &s[0..3] == "BKN" {
+                cl = CloudLayer::Broken(cloud_type, cloud_floor);
+            } else if &s[0..3] == "OVC" {
+                cl = CloudLayer::Overcast(cloud_type, cloud_floor);
+            } else {
+                cl = CloudLayer::Unknown(cloud_type, cloud_floor);
+            }
 
-        return Ok(CloudVisibilityInfo::CloudLayer(cl));
+            return Ok(CloudVisibilityInfo::CloudLayer(cl));
+        }
     }
 
     // RVR
-    if chs[0] == 'R' {
-
+    if chs[0] == 'R'
+        && chs[1].is_digit(10) {
+        return Ok(CloudVisibilityInfo::RVR());
     }
 
     // Vertical visibility
@@ -434,6 +441,17 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
         && chs[3] == 'M' {
 
         return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(s[0..2].parse().unwrap())));
+    }
+    if chs[0].is_digit(10)
+        && chs[1] == 'S'
+        && chs[2] == 'M' {
+
+        return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(s[0..1].parse().unwrap())));
+    }
+
+    if s.len() < 2 {
+        // Not long enough for any weather.
+        return Err((0, s.len(), CloudVisibilityError::UnknownData));
     }
 
     // Weather
