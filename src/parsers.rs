@@ -159,7 +159,7 @@ pub enum CloudVisibilityInfo<'a> {
     Visibility(Visibility),
     // TODO: Fully add RVRs
     RVR(&'a str, Visibility, bool),
-    Weather(),
+    Weather(Weather),
     Clouds(Clouds),
     CloudLayer(CloudLayer),
 }
@@ -437,8 +437,108 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     }
 
     // Weather
+    let intensity;
+    let mut i = 0;
+    if chs[0] == '+' {
+        intensity = WeatherIntensity::Heavy;
+        i += 1;
+    } else if chs[0] == '-' {
+        intensity = WeatherIntensity::Light;
+        i += 1;
+    } else if chs[0] == 'V'
+        && chs[1] == 'C' {
+        // Vicinity
+        intensity = WeatherIntensity::InVicinity;
+        i += 2;
+    } else {
+        intensity = WeatherIntensity::Moderate;
+    }
+    let mut conditions = Vec::new();
+    loop {
+        if s.len() < i + 2 {
+            break;
+        }
+        let mut s = String::new();
+        s.push(chs[i]);
+        s.push(chs[i + 1]);
 
-    return Err((0, s.len(), CloudVisibilityError::UnknownData));
+        if s == "MI" {
+            conditions.push(WeatherCondition::Shallow);
+        } else if s == "PR" {
+            conditions.push(WeatherCondition::Partial);
+        } else if s == "BC" {
+            conditions.push(WeatherCondition::Patches);
+        } else if s == "DR" {
+            conditions.push(WeatherCondition::LowDrifting);
+        } else if s == "BL" {
+            conditions.push(WeatherCondition::Blowing);
+        } else if s == "SH" {
+            conditions.push(WeatherCondition::Showers);
+        } else if s == "TS" {
+            conditions.push(WeatherCondition::Thunderstorm);
+        } else if s == "FZ" {
+            conditions.push(WeatherCondition::Freezing);
+        } else if s == "RA" {
+            conditions.push(WeatherCondition::Rain);
+        } else if s == "DZ" {
+            conditions.push(WeatherCondition::Drizzle);
+        } else if s == "SN" {
+            conditions.push(WeatherCondition::Snow);
+        } else if s == "SG" {
+            conditions.push(WeatherCondition::SnowGrains);
+        } else if s == "IC" {
+            conditions.push(WeatherCondition::IceCrystals);
+        } else if s == "PL" {
+            conditions.push(WeatherCondition::IcePellets);
+        } else if s == "GR" {
+            conditions.push(WeatherCondition::Hail);
+        } else if s == "GS" {
+            conditions.push(WeatherCondition::SnowPelletsOrSmallHail);
+        } else if s == "UP" {
+            conditions.push(WeatherCondition::UnknownPrecipitation);
+        } else if s == "FG" {
+            conditions.push(WeatherCondition::Fog);
+        } else if s == "VA" {
+            conditions.push(WeatherCondition::VolcanicAsh);
+        } else if s == "BR" {
+            conditions.push(WeatherCondition::Mist);
+        } else if s == "HZ" {
+            conditions.push(WeatherCondition::Haze);
+        } else if s == "DU" {
+            conditions.push(WeatherCondition::WidespreadDust);
+        } else if s == "FU" {
+            conditions.push(WeatherCondition::Smoke);
+        } else if s == "SA" {
+            conditions.push(WeatherCondition::Sand);
+        } else if s == "PY" {
+            conditions.push(WeatherCondition::Spray);
+        } else if s == "SQ" {
+            conditions.push(WeatherCondition::Squall);
+        } else if s == "PO" {
+            conditions.push(WeatherCondition::Dust);
+        } else if s == "DS" {
+            conditions.push(WeatherCondition::Duststorm);
+        } else if s == "SS" {
+            conditions.push(WeatherCondition::Sandstorm);
+        } else if s == "FC" {
+            conditions.push(WeatherCondition::FunnelCloud);
+        } else {
+            return Err((i, 2, CloudVisibilityError::UnknownData));
+        }
+
+        i += 2;
+    }
+
+    if conditions.len() < 1 {
+        // Need at least one weather condition
+        return Err((0, s.len(), CloudVisibilityError::UnknownData));
+    }
+
+    let wx = Weather {
+        intensity,
+        conditions,
+    };
+    Ok(CloudVisibilityInfo::Weather(wx))
 }
 
 pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(i32, i32), TemperatureError> {

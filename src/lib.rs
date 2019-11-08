@@ -124,6 +124,8 @@ pub struct Metar<'a> {
     pub cloud_layers: Vec<CloudLayer>,
     /// The current vertical visibility, in feet
     pub vert_visibility: Option<VertVisibility>,
+    /// The current weather conditions
+    pub weather: Vec<Weather>,
     /// The current temperature
     pub temperature: i32,
     /// The current dewpoint
@@ -270,6 +272,7 @@ impl<'a> Metar<'a> {
             clouds: Clouds::SkyClear,
             cloud_layers: Vec::new(),
             vert_visibility: None,
+            weather: Vec::new(),
             temperature: 0,
             dewpoint: 0,
             pressure: Pressure::Hectopascals(0),
@@ -344,8 +347,8 @@ impl<'a> Metar<'a> {
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
                                         metar.visibility = visibility;
                                     },
-                                    parsers::CloudVisibilityInfo::Weather() => {
-
+                                    parsers::CloudVisibilityInfo::Weather(wx) => {
+                                        metar.weather.push(wx);
                                     },
                                 };
                             } else if let Err(e) = r {
@@ -389,8 +392,8 @@ impl<'a> Metar<'a> {
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
                                         metar.visibility = visibility;
                                     },
-                                    parsers::CloudVisibilityInfo::Weather() => {
-
+                                    parsers::CloudVisibilityInfo::Weather(wx) => {
+                                        metar.weather.push(wx);
                                     },
                                 };
                             } else if let Err(e) = r {
