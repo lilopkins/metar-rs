@@ -32,14 +32,13 @@ pub enum WindDirection {
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// Horizontal visibility
 pub enum Visibility {
-    /// Visibility is less than this number of metres
-    LessThanMetres(u32),
-    /// Visibility is less than this number of statute miles
-    LessThanStatuteMiles(u32),
     /// Visibility in metres
     Metres(u32),
     /// Visibility in statute miles
     StatuteMiles(u32),
+    /// Visibility in statute miles, where the value is A/B SM, where A is the first parameter and
+    /// B is the second.
+    StatuteMilesFraction(u32, u32),
     /// Clouds and Visibility OK (CAVOK)
     CavOK,
 }

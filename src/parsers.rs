@@ -413,40 +413,43 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     }
 
     // RVR
-    if chs[0] == 'R'
-        && chs[1].is_digit(10) {
-        return Ok(CloudVisibilityInfo::RVR());
+    if s.len() >= 2 {
+        if chs[0] == 'R'
+            && chs[1].is_digit(10) {
+            return Ok(CloudVisibilityInfo::RVR());
+        }
     }
 
     // Vertical visibility
-    if chs[0] == 'V' && chs[1] == 'V' {
-        if chs[2].is_digit(10) && chs[3].is_digit(10) {
-            return Ok(CloudVisibilityInfo::VerticalVisibility(VertVisibility::Distance(s[2..3].parse().unwrap())));
-        } else {
-            return Ok(CloudVisibilityInfo::VerticalVisibility(VertVisibility::ReducedByUnknownAmount));
+    if s.len() >= 5 {
+        if chs[0] == 'V' && chs[1] == 'V' {
+            if chs[2].is_digit(10) && chs[3].is_digit(10) && chs[4].is_digit(10) {
+                return Ok(CloudVisibilityInfo::VerticalVisibility(VertVisibility::Distance(s[2..5].parse().unwrap())));
+            } else {
+                return Ok(CloudVisibilityInfo::VerticalVisibility(VertVisibility::ReducedByUnknownAmount));
+            }
         }
     }
 
     // Visibility
-    if chs[0].is_digit(10)
-        && chs[1].is_digit(10)
-        && chs[2].is_digit(10)
-        && chs[3].is_digit(10) {
+    if s.len() >= 4 {
+        if chs[0].is_digit(10)
+            && chs[1].is_digit(10)
+            && chs[2].is_digit(10)
+            && chs[3].is_digit(10) {
 
-        return Ok(CloudVisibilityInfo::Visibility(Visibility::Metres(s[0..4].parse().unwrap())));
+            return Ok(CloudVisibilityInfo::Visibility(Visibility::Metres(s[0..4].parse().unwrap())));
+        }
     }
-    if chs[0].is_digit(10)
-        && chs[1].is_digit(10)
-        && chs[2] == 'S'
-        && chs[3] == 'M' {
-
-        return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(s[0..2].parse().unwrap())));
-    }
-    if chs[0].is_digit(10)
-        && chs[1] == 'S'
-        && chs[2] == 'M' {
-
-        return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(s[0..1].parse().unwrap())));
+    if s.ends_with("SM") {
+        let s = &s[0..s.len() - 2];
+        if s.contains("/") {
+            // Fractional visibilty
+            let parts: Vec<_> = s.split("/").collect();
+            return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMilesFraction(parts[0].parse().unwrap(), parts[1].parse().unwrap())));
+        } else {
+            return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(s.parse().unwrap())));
+        }
     }
 
     if s.len() < 2 {
