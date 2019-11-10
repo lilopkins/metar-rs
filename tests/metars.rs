@@ -481,3 +481,38 @@ fn test_metar_14() {
     assert_eq!(r.pressure, Pressure::InchesMercury(2999));
     assert_eq!(r.remarks, Some("RMK AO2 VIS 1/8V1/2 T01610150"));
 }
+
+#[test]
+fn test_metar_15() {
+    let metar = "KLAX 101753Z COR VRB04KT 5SM HZ FEW009 19/14 A3002 RMK AO2 SLP165 T01940139 10194 20156 51006";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+
+    assert_eq!(r.station, "KLAX");
+    assert_eq!(r.time.date, 10);
+    assert_eq!(r.time.hour, 17);
+    assert_eq!(r.time.minute, 53);
+    assert_eq!(r.wind.dir, WindDirection::Variable);
+    assert_eq!(r.wind.speed, WindSpeed::Knot(4));
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(r.wind.gusting, None);
+    assert_eq!(r.visibility, Visibility::StatuteMiles(5));
+    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.cloud_layers.len(), 1);
+    assert!(r.cloud_layers.contains(&CloudLayer::Few(CloudType::Normal, Some(9))));
+    assert_eq!(r.vert_visibility, None);
+    assert_eq!(r.weather.len(), 1);
+    assert!(r.weather.contains(&Weather {
+        intensity: WeatherIntensity::Moderate,
+        conditions: vec![
+            WeatherCondition::Haze,
+        ],
+    }));
+    assert_eq!(r.temperature, 19);
+    assert_eq!(r.dewpoint, 14);
+    assert_eq!(r.pressure, Pressure::InchesMercury(3002));
+    assert_eq!(r.remarks, Some("RMK AO2 SLP165 T01940139 10194 20156 51006"));
+}

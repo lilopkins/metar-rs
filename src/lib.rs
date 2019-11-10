@@ -31,7 +31,7 @@
 //!
 //! <station> ::= <letter><letter><letter><letter>
 //!
-//! <method> ::= '' | 'AUTO'
+//! <method> ::= '' | 'AUTO' | 'COR'
 //!
 //! <observationtime> ::= <obs_day><obs_hour><obs_minute> 'Z'
 //! <obs_day> ::= <obs_day_1><digit> | '3' <obs_day_2>
@@ -50,7 +50,7 @@
 //!
 //! <wind_varying> ::= '' | <angle> 'V' <angle> ' '
 //!
-//! <angle> ::= <angle_1><digit><digit> | '3' <angle_2><digit>
+//! <angle> ::= <angle_1><digit><digit> | '3' <angle_2><digit> | '360'
 //! <angle_1> ::= '0' | '1' | '2'
 //! <angle_2> ::= '0' | '1' | '2' | '3' | '4' | '5'
 //!
@@ -71,7 +71,7 @@
 //! <cloud_type> ::= '' | 'CB' | 'TCU' | '///'
 //!
 //! <vertical_visibility> ::= 'VV' <vertical_visibility_distance>
-//! <vertical_visibility_distance> ::= '///' | <digit><digit>
+//! <vertical_visibility_distance> ::= '///' | <digit><digit><digit>
 //!
 //! <weather> ::= <weather_cond> | <weather_cond> <weather>
 //! <weather_cond> ::= <weather_intesity><weather_descriptor><weather_preceipitation>
@@ -306,7 +306,8 @@ impl<'a> Metar<'a> {
                     }
                 },
                 ParseState::MethodOrWind => {
-                    if word == "AUTO" {
+                    if word == "AUTO"
+                        || word == "COR" {
                         // Method - just ignore for now
                         continue;
                     }
