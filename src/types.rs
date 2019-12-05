@@ -29,16 +29,13 @@ pub enum WindDirection {
     Above,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 /// Horizontal visibility
 pub enum Visibility {
     /// Visibility in metres
     Metres(u32),
     /// Visibility in statute miles
-    StatuteMiles(u32),
-    /// Visibility in statute miles, where the value is A/B SM, where A is the first parameter and
-    /// B is the second.
-    StatuteMilesFraction(u32, u32),
+    StatuteMiles(f32),
     /// Clouds and Visibility OK (CAVOK)
     CavOK,
 }

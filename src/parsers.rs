@@ -447,10 +447,20 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
         if s.contains("/") {
             // Fractional visibilty
             let parts: Vec<_> = s.split("/").collect();
-            return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMilesFraction(parts[0].parse().unwrap(), parts[1].parse().unwrap())));
+            let numerator: u32 = parts[0].parse().unwrap();
+            let denominator: u32 = parts[1].parse().unwrap();
+            let fraction: f32 = numerator as f32 / denominator as f32;
+            return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(fraction)));
         } else {
             return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(s.parse().unwrap())));
         }
+    }
+
+    // If just a number, this might be a visibility in statute miles
+    let v = s.parse();
+    if v.is_ok() {
+        let v: u32 = v.unwrap();
+        return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(v as f32)));
     }
 
     if s.len() < 2 {
@@ -574,6 +584,10 @@ pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(i32, i32), Temperatur
     }
     if s.contains('R') {
         // To protect against RVRs being interpreted as temperatures
+        return Err((0, s.len(), TemperatureError::NotTemperatureDewpointPair));
+    }
+    if s.contains("SM") {
+        // To protect against visibilities measured in statute miles
         return Err((0, s.len(), TemperatureError::NotTemperatureDewpointPair));
     }
 

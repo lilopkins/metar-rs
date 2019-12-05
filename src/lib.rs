@@ -107,7 +107,7 @@ use std::fmt;
 pub use types::*;
 pub use parsers::errors::*;
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug)]
 /// A complete METAR
 pub struct Metar<'a> {
     /// The station making the METAR measurement
@@ -347,7 +347,21 @@ impl<'a> Metar<'a> {
                                         metar.clouds = Clouds::Undetermined;
                                     },
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
-                                        metar.visibility = visibility;
+                                        match visibility {
+                                            Visibility::StatuteMiles(dist) => {
+                                                match metar.visibility {
+                                                    Visibility::StatuteMiles(prevdist) => {
+                                                        metar.visibility = Visibility::StatuteMiles(prevdist + dist);
+                                                    },
+                                                    _ => {
+                                                        metar.visibility = visibility;
+                                                    }
+                                                }
+                                            },
+                                            _ => {
+                                                metar.visibility = visibility;
+                                            }
+                                        }
                                     },
                                     parsers::CloudVisibilityInfo::Weather(wx) => {
                                         metar.weather.push(wx);
@@ -393,7 +407,21 @@ impl<'a> Metar<'a> {
                                         metar.clouds = Clouds::Undetermined;
                                     },
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
-                                        metar.visibility = visibility;
+                                        match visibility {
+                                            Visibility::StatuteMiles(dist) => {
+                                                match metar.visibility {
+                                                    Visibility::StatuteMiles(prevdist) => {
+                                                        metar.visibility = Visibility::StatuteMiles(prevdist + dist);
+                                                    },
+                                                    _ => {
+                                                        metar.visibility = visibility;
+                                                    }
+                                                }
+                                            },
+                                            _ => {
+                                                metar.visibility = visibility;
+                                            }
+                                        }
                                     },
                                     parsers::CloudVisibilityInfo::Weather(wx) => {
                                         metar.weather.push(wx);

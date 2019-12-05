@@ -334,7 +334,7 @@ fn test_metar_10() {
     assert_eq!(r.wind.speed, WindSpeed::Knot(0));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::StatuteMiles(10));
+    assert_eq!(r.visibility, Visibility::StatuteMiles(10.0));
     assert_eq!(r.clouds, Clouds::SkyClear);
     assert_eq!(r.cloud_layers.len(), 0);
     assert_eq!(r.vert_visibility, None);
@@ -362,7 +362,7 @@ fn test_metar_11() {
     assert_eq!(r.wind.speed, WindSpeed::Knot(7));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::StatuteMiles(5));
+    assert_eq!(r.visibility, Visibility::StatuteMiles(5.0));
     assert_eq!(r.clouds, Clouds::CloudLayers);
     assert_eq!(r.cloud_layers.len(), 2);
     assert!(r.cloud_layers.contains(&CloudLayer::Scattered(CloudType::Normal, Some(6))));
@@ -465,7 +465,7 @@ fn test_metar_14() {
     assert_eq!(r.wind.speed, WindSpeed::Knot(8));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::StatuteMilesFraction(1, 4));
+    assert_eq!(r.visibility, Visibility::StatuteMiles(0.25));
     assert_eq!(r.clouds, Clouds::Undetermined);
     assert_eq!(r.cloud_layers.len(), 0);
     assert_eq!(r.vert_visibility, Some(VertVisibility::Distance(1)));
@@ -499,7 +499,7 @@ fn test_metar_15() {
     assert_eq!(r.wind.speed, WindSpeed::Knot(4));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::StatuteMiles(5));
+    assert_eq!(r.visibility, Visibility::StatuteMiles(5.0));
     assert_eq!(r.clouds, Clouds::CloudLayers);
     assert_eq!(r.cloud_layers.len(), 1);
     assert!(r.cloud_layers.contains(&CloudLayer::Few(CloudType::Normal, Some(9))));
@@ -515,4 +515,46 @@ fn test_metar_15() {
     assert_eq!(r.dewpoint, 14);
     assert_eq!(r.pressure, Pressure::InchesMercury(3002));
     assert_eq!(r.remarks, Some("RMK AO2 SLP165 T01940139 10194 20156 51006"));
+}
+
+#[test]
+fn test_metar_16() {
+    let metar = "KLAX 041828Z 02004KT 2 1/2SM -RA BR BKN007 OVC013 14/12 A2996 RMK AO2 VIS 1 1/2V3 P0002 T01390122 $";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+
+    assert_eq!(r.station, "KLAX");
+    assert_eq!(r.time.date, 04);
+    assert_eq!(r.time.hour, 18);
+    assert_eq!(r.time.minute, 28);
+    assert_eq!(r.wind.dir, WindDirection::Heading(020));
+    assert_eq!(r.wind.speed, WindSpeed::Knot(4));
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(r.wind.gusting, None);
+    assert_eq!(r.visibility, Visibility::StatuteMiles(2.5));
+    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.cloud_layers.len(), 2);
+    assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(7))));
+    assert!(r.cloud_layers.contains(&CloudLayer::Overcast(CloudType::Normal, Some(13))));
+    assert_eq!(r.vert_visibility, None);
+    assert_eq!(r.weather.len(), 2);
+    assert!(r.weather.contains(&Weather {
+        intensity: WeatherIntensity::Light,
+        conditions: vec![
+            WeatherCondition::Rain,
+        ],
+    }));
+    assert!(r.weather.contains(&Weather {
+        intensity: WeatherIntensity::Moderate,
+        conditions: vec![
+            WeatherCondition::Mist,
+        ],
+    }));
+    assert_eq!(r.temperature, 14);
+    assert_eq!(r.dewpoint, 12);
+    assert_eq!(r.pressure, Pressure::InchesMercury(2996));
+    assert_eq!(r.remarks, Some("RMK AO2 VIS 1 1/2V3 P0002 T01390122 $"));
 }
