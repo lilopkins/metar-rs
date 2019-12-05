@@ -79,7 +79,8 @@ pub mod errors {
     pub enum PressureError {
         /// The pressure is not valid
         PressureNotValid,
-        /// The unit is not valid
+        /// The unit is not valid. Note that this is also returned when a unit is not specified,
+        /// or when the pressure is not long enough to satisfy the requirements of any other unit.
         UnitNotValid,
     }
 
@@ -622,6 +623,10 @@ pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(i32, i32), Temperatur
 }
 
 pub fn parse_pressure<'a>(s: &'a str) -> ParserResult<Pressure, PressureError> {
+    if s.len() < 5 {
+        return Err((1, s.len(), PressureError::UnitNotValid));
+    }
+
     let chs: Vec<_> = s.chars().collect();
 
     if !chs[1].is_digit(10) {

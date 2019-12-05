@@ -1,9 +1,9 @@
 [package]
 name = "metar"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["Lily Hopkins <bsalarius@gmail.com>"]
 edition = "2018"
-description = "METAR parsing library for Rust"
+description = "A zero-dependency METAR parsing library in pure Rust"
 license = "MIT"
 homepage = "https://github.com/lilopkins/metar-rs"
 repository = "https://github.com/lilopkins/metar-rs"
