@@ -1,4 +1,8 @@
 use metar::*;
+use metar::Data::{Known, Unknown};
+use metar::SpeedUnit::*;
+use metar::DistanceUnit::*;
+use metar::PressureUnit::*;
 
 #[test]
 fn test_metar_1() {
@@ -13,12 +17,12 @@ fn test_metar_1() {
     assert_eq!(r.time.date, 28);
     assert_eq!(r.time.hour, 21);
     assert_eq!(r.time.minute, 20);
-    assert_eq!(r.wind.dir, WindDirection::Heading(190));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(15));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(190)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 15, unit: Knot }));
     assert_eq!(r.wind.varying, Some((140, 220)));
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::Metres(6000));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 6000.0, unit: Metres }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 2);
     assert!(r.cloud_layers.contains(&CloudLayer::Scattered(CloudType::Normal, Some(6))));
     assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(9))));
@@ -30,9 +34,9 @@ fn test_metar_1() {
             WeatherCondition::Rain,
         ],
     }));
-    assert_eq!(r.temperature, 16);
-    assert_eq!(r.dewpoint, 14);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1006));
+    assert_eq!(r.temperature, Known(16));
+    assert_eq!(r.dewpoint, Known(14));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1006.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -49,18 +53,18 @@ fn test_metar_2() {
     assert_eq!(r.time.date, 06);
     assert_eq!(r.time.hour, 20);
     assert_eq!(r.time.minute, 50);
-    assert_eq!(r.wind.dir, WindDirection::Heading(310));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(6));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(310)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 6, unit: Knot }));
     assert_eq!(r.wind.varying, Some((270, 340)));
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::CavOK);
-    assert_eq!(r.clouds, Clouds::SkyClear);
+    assert!(r.visibility.unwrap().is_infinite());
+    assert_eq!(r.clouds, Known(Clouds::SkyClear));
     assert_eq!(r.cloud_layers.len(), 0);
     assert_eq!(r.vert_visibility, None);
     assert_eq!(r.weather.len(), 0);
-    assert_eq!(r.temperature, 13);
-    assert_eq!(r.dewpoint, 7);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1017));
+    assert_eq!(r.temperature, Known(13));
+    assert_eq!(r.dewpoint, Known(7));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1017.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -77,12 +81,12 @@ fn test_metar_3() {
     assert_eq!(r.time.date, 07);
     assert_eq!(r.time.hour, 15);
     assert_eq!(r.time.minute, 20);
-    assert_eq!(r.wind.dir, WindDirection::Heading(190));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(13));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(190)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 13, unit: Knot }));
     assert_eq!(r.wind.varying, Some((160, 220)));
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::Metres(3000));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 3000.0, unit: Metres }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 1);
     assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(6))));
     assert_eq!(r.vert_visibility, None);
@@ -100,9 +104,9 @@ fn test_metar_3() {
             WeatherCondition::Mist,
         ],
     }));
-    assert_eq!(r.temperature, 15);
-    assert_eq!(r.dewpoint, 14);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1012));
+    assert_eq!(r.temperature, Known(15));
+    assert_eq!(r.dewpoint, Known(14));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1012.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -119,12 +123,12 @@ fn test_metar_4() {
     assert_eq!(r.time.date, 07);
     assert_eq!(r.time.hour, 17);
     assert_eq!(r.time.minute, 50);
-    assert_eq!(r.wind.dir, WindDirection::Heading(210));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(10));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(210)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 10, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::Metres(3500));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 3500.0, unit: Metres }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 1);
     assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(4))));
     assert_eq!(r.vert_visibility, None);
@@ -142,9 +146,9 @@ fn test_metar_4() {
             WeatherCondition::Mist,
         ],
     }));
-    assert_eq!(r.temperature, 16);
-    assert_eq!(r.dewpoint, 15);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1011));
+    assert_eq!(r.temperature, Known(16));
+    assert_eq!(r.dewpoint, Known(15));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1011.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -161,18 +165,18 @@ fn test_metar_5() {
     assert_eq!(r.time.date, 08);
     assert_eq!(r.time.hour, 06);
     assert_eq!(r.time.minute, 50);
-    assert_eq!(r.wind.dir, WindDirection::Variable);
-    assert_eq!(r.wind.speed, WindSpeed::Knot(3));
+    assert_eq!(r.wind.dir, Known(WindDirection::Variable));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 3, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::CavOK);
-    assert_eq!(r.clouds, Clouds::SkyClear);
+    assert!(r.visibility.unwrap().is_infinite());
+    assert_eq!(r.clouds, Known(Clouds::SkyClear));
     assert_eq!(r.cloud_layers.len(), 0);
     assert_eq!(r.vert_visibility, None);
     assert_eq!(r.weather.len(), 0);
-    assert_eq!(r.temperature, 12);
-    assert_eq!(r.dewpoint, 10);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1009));
+    assert_eq!(r.temperature, Known(12));
+    assert_eq!(r.dewpoint, Known(10));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1009.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -189,12 +193,12 @@ fn test_metar_6() {
     assert_eq!(r.time.date, 08);
     assert_eq!(r.time.hour, 16);
     assert_eq!(r.time.minute, 50);
-    assert_eq!(r.wind.dir, WindDirection::Heading(230));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(10));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(230)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 10, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::Metres(9999));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 9999.0, unit: Metres }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 2);
     assert!(r.cloud_layers.contains(&CloudLayer::Few(CloudType::Normal, Some(18))));
     assert!(r.cloud_layers.contains(&CloudLayer::Few(CloudType::ToweringCumulus, Some(25))));
@@ -206,9 +210,9 @@ fn test_metar_6() {
             WeatherCondition::Showers,
         ],
     }));
-    assert_eq!(r.temperature, 15);
-    assert_eq!(r.dewpoint, 11);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1006));
+    assert_eq!(r.temperature, Known(15));
+    assert_eq!(r.dewpoint, Known(11));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1006.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -225,12 +229,12 @@ fn test_metar_7() {
     assert_eq!(r.time.date, 11);
     assert_eq!(r.time.hour, 07);
     assert_eq!(r.time.minute, 50);
-    assert_eq!(r.wind.dir, WindDirection::Heading(220));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(17));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(220)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 17, unit: Knot }));
     assert_eq!(r.wind.varying, Some((190, 250)));
-    assert_eq!(r.wind.gusting, Some(WindSpeed::Knot(28)));
-    assert_eq!(r.visibility, Visibility::Metres(6000));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.wind.gusting, Some(WindSpeed { speed: 28, unit: Knot }));
+    assert_eq!(r.visibility, Known(Visibility { visibility: 6000.0, unit: Metres }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 2);
     assert!(r.cloud_layers.contains(&CloudLayer::Few(CloudType::Normal, Some(7))));
     assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(10))));
@@ -242,9 +246,9 @@ fn test_metar_7() {
             WeatherCondition::Rain,
         ],
     }));
-    assert_eq!(r.temperature, 15);
-    assert_eq!(r.dewpoint, 14);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1008));
+    assert_eq!(r.temperature, Known(15));
+    assert_eq!(r.dewpoint, Known(14));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1008.0, unit: Hectopascals }));
     assert_eq!(r.remarks, Some("RERA"));
 }
 
@@ -261,12 +265,12 @@ fn test_metar_8() {
     assert_eq!(r.time.date, 13);
     assert_eq!(r.time.hour, 19);
     assert_eq!(r.time.minute, 50);
-    assert_eq!(r.wind.dir, WindDirection::Heading(060));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(01));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(060)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 01, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::Metres(9999));
-    assert_eq!(r.clouds, Clouds::NoSignificantCloud);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 9999.0, unit: Metres }));
+    assert_eq!(r.clouds, Known(Clouds::NoSignificantCloud));
     assert_eq!(r.cloud_layers.len(), 0);
     assert_eq!(r.vert_visibility, None);
     assert_eq!(r.weather.len(), 1);
@@ -277,9 +281,9 @@ fn test_metar_8() {
             WeatherCondition::Fog,
         ],
     }));
-    assert_eq!(r.temperature, 09);
-    assert_eq!(r.dewpoint, 08);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1010));
+    assert_eq!(r.temperature, Known(09));
+    assert_eq!(r.dewpoint, Known(08));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1010.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -296,12 +300,12 @@ fn test_metar_9() {
     assert_eq!(r.time.date, 15);
     assert_eq!(r.time.hour, 06);
     assert_eq!(r.time.minute, 50);
-    assert_eq!(r.wind.dir, WindDirection::Heading(060));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(01));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(060)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 01, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::Metres(0500));
-    assert_eq!(r.clouds, Clouds::Undetermined);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 0500.0, unit: Metres }));
+    assert_eq!(r.clouds, Unknown);
     assert_eq!(r.cloud_layers.len(), 0);
     assert_eq!(r.vert_visibility, Some(VertVisibility::ReducedByUnknownAmount));
     assert_eq!(r.weather.len(), 1);
@@ -311,9 +315,9 @@ fn test_metar_9() {
             WeatherCondition::Fog,
         ],
     }));
-    assert_eq!(r.temperature, 11);
-    assert_eq!(r.dewpoint, 10);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1003));
+    assert_eq!(r.temperature, Known(11));
+    assert_eq!(r.dewpoint, Known(10));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1003.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -330,18 +334,18 @@ fn test_metar_10() {
     assert_eq!(r.time.date, 06);
     assert_eq!(r.time.hour, 13);
     assert_eq!(r.time.minute, 56);
-    assert_eq!(r.wind.dir, WindDirection::Heading(0));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(0));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(0)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 0, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::StatuteMiles(10.0));
-    assert_eq!(r.clouds, Clouds::SkyClear);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 10.0, unit: StatuteMiles }));
+    assert_eq!(r.clouds, Known(Clouds::SkyClear));
     assert_eq!(r.cloud_layers.len(), 0);
     assert_eq!(r.vert_visibility, None);
     assert_eq!(r.weather.len(), 0);
-    assert_eq!(r.temperature, 6);
-    assert_eq!(r.dewpoint, -3);
-    assert_eq!(r.pressure, Pressure::InchesMercury(3029));
+    assert_eq!(r.temperature, Known(6));
+    assert_eq!(r.dewpoint, Known(-3));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 3029.0, unit: InchesMercury }));
     assert_eq!(r.remarks, Some("RMK AO2 SLP264 T00611028 $"));
 }
 
@@ -358,12 +362,12 @@ fn test_metar_11() {
     assert_eq!(r.time.date, 06);
     assert_eq!(r.time.hour, 18);
     assert_eq!(r.time.minute, 53);
-    assert_eq!(r.wind.dir, WindDirection::Heading(260));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(7));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(260)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 7, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::StatuteMiles(5.0));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 5.0, unit: StatuteMiles }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 2);
     assert!(r.cloud_layers.contains(&CloudLayer::Scattered(CloudType::Normal, Some(6))));
     assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(13))));
@@ -375,9 +379,9 @@ fn test_metar_11() {
             WeatherCondition::Mist,
         ],
     }));
-    assert_eq!(r.temperature, 19);
-    assert_eq!(r.dewpoint, 13);
-    assert_eq!(r.pressure, Pressure::InchesMercury(3000));
+    assert_eq!(r.temperature, Known(19));
+    assert_eq!(r.dewpoint, Known(13));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 3000.0, unit: InchesMercury }));
     assert_eq!(r.remarks, Some("RMK AO2 SLP158 T01890133 $"));
 }
 
@@ -394,20 +398,20 @@ fn test_metar_12() {
     assert_eq!(r.time.date, 06);
     assert_eq!(r.time.hour, 19);
     assert_eq!(r.time.minute, 20);
-    assert_eq!(r.wind.dir, WindDirection::Heading(140));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(7));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(140)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 7, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::Metres(9999));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 9999.0, unit: Metres }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 2);
     assert!(r.cloud_layers.contains(&CloudLayer::Scattered(CloudType::Unknown, Some(35))));
     assert!(r.cloud_layers.contains(&CloudLayer::Unknown(CloudType::Cumulonimbus, None)));
     assert_eq!(r.vert_visibility, None);
     assert_eq!(r.weather.len(), 0);
-    assert_eq!(r.temperature, 7);
-    assert_eq!(r.dewpoint, 6);
-    assert_eq!(r.pressure, Pressure::Hectopascals(997));
+    assert_eq!(r.temperature, Known(7));
+    assert_eq!(r.dewpoint, Known(6));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 997.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -424,12 +428,12 @@ fn test_metar_13() {
     assert_eq!(r.time.date, 08);
     assert_eq!(r.time.hour, 17);
     assert_eq!(r.time.minute, 50);
-    assert_eq!(r.wind.dir, WindDirection::Heading(310));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(6));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(310)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 6, unit: Knot }));
     assert_eq!(r.wind.varying, Some((280, 360)));
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::Metres(7000));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 7000.0, unit: Metres }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 3);
     assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(7))));
     assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(12))));
@@ -442,9 +446,9 @@ fn test_metar_13() {
             WeatherCondition::Rain,
         ],
     }));
-    assert_eq!(r.temperature, 6);
-    assert_eq!(r.dewpoint, 5);
-    assert_eq!(r.pressure, Pressure::Hectopascals(1009));
+    assert_eq!(r.temperature, Known(6));
+    assert_eq!(r.dewpoint, Known(5));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 1009.0, unit: Hectopascals }));
     assert_eq!(r.remarks, None);
 }
 
@@ -461,12 +465,12 @@ fn test_metar_14() {
     assert_eq!(r.time.date, 10);
     assert_eq!(r.time.hour, 13);
     assert_eq!(r.time.minute, 35);
-    assert_eq!(r.wind.dir, WindDirection::Heading(100));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(8));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(100)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 8, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::StatuteMiles(0.25));
-    assert_eq!(r.clouds, Clouds::Undetermined);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 0.25, unit: StatuteMiles }));
+    assert_eq!(r.clouds, Unknown);
     assert_eq!(r.cloud_layers.len(), 0);
     assert_eq!(r.vert_visibility, Some(VertVisibility::Distance(1)));
     assert_eq!(r.weather.len(), 1);
@@ -476,9 +480,9 @@ fn test_metar_14() {
             WeatherCondition::Fog,
         ],
     }));
-    assert_eq!(r.temperature, 16);
-    assert_eq!(r.dewpoint, 15);
-    assert_eq!(r.pressure, Pressure::InchesMercury(2999));
+    assert_eq!(r.temperature, Known(16));
+    assert_eq!(r.dewpoint, Known(15));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 2999.0, unit: InchesMercury }));
     assert_eq!(r.remarks, Some("RMK AO2 VIS 1/8V1/2 T01610150"));
 }
 
@@ -495,12 +499,12 @@ fn test_metar_15() {
     assert_eq!(r.time.date, 10);
     assert_eq!(r.time.hour, 17);
     assert_eq!(r.time.minute, 53);
-    assert_eq!(r.wind.dir, WindDirection::Variable);
-    assert_eq!(r.wind.speed, WindSpeed::Knot(4));
+    assert_eq!(r.wind.dir, Known(WindDirection::Variable));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 4, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::StatuteMiles(5.0));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 5.0, unit: StatuteMiles }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 1);
     assert!(r.cloud_layers.contains(&CloudLayer::Few(CloudType::Normal, Some(9))));
     assert_eq!(r.vert_visibility, None);
@@ -511,9 +515,9 @@ fn test_metar_15() {
             WeatherCondition::Haze,
         ],
     }));
-    assert_eq!(r.temperature, 19);
-    assert_eq!(r.dewpoint, 14);
-    assert_eq!(r.pressure, Pressure::InchesMercury(3002));
+    assert_eq!(r.temperature, Known(19));
+    assert_eq!(r.dewpoint, Known(14));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 3002.0, unit: InchesMercury }));
     assert_eq!(r.remarks, Some("RMK AO2 SLP165 T01940139 10194 20156 51006"));
 }
 
@@ -530,12 +534,12 @@ fn test_metar_16() {
     assert_eq!(r.time.date, 04);
     assert_eq!(r.time.hour, 18);
     assert_eq!(r.time.minute, 28);
-    assert_eq!(r.wind.dir, WindDirection::Heading(020));
-    assert_eq!(r.wind.speed, WindSpeed::Knot(4));
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(020)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 4, unit: Knot }));
     assert_eq!(r.wind.varying, None);
     assert_eq!(r.wind.gusting, None);
-    assert_eq!(r.visibility, Visibility::StatuteMiles(2.5));
-    assert_eq!(r.clouds, Clouds::CloudLayers);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 2.5, unit: StatuteMiles }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
     assert_eq!(r.cloud_layers.len(), 2);
     assert!(r.cloud_layers.contains(&CloudLayer::Broken(CloudType::Normal, Some(7))));
     assert!(r.cloud_layers.contains(&CloudLayer::Overcast(CloudType::Normal, Some(13))));
@@ -553,8 +557,36 @@ fn test_metar_16() {
             WeatherCondition::Mist,
         ],
     }));
-    assert_eq!(r.temperature, 14);
-    assert_eq!(r.dewpoint, 12);
-    assert_eq!(r.pressure, Pressure::InchesMercury(2996));
+    assert_eq!(r.temperature, Known(14));
+    assert_eq!(r.dewpoint, Known(12));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 2996.0, unit: InchesMercury }));
     assert_eq!(r.remarks, Some("RMK AO2 VIS 1 1/2V3 P0002 T01390122 $"));
+}
+
+#[test]
+fn test_metar_17() {
+    let metar = "ESSA 081950Z 22021KT 9999 OVC025 06/03 Q0973 R01L/29//95 R08/29//95 R01R/29//95 NOSIG";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+
+    assert_eq!(r.station, "ESSA");
+    assert_eq!(r.time.date, 08);
+    assert_eq!(r.time.hour, 19);
+    assert_eq!(r.time.minute, 50);
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(220)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 21, unit: Knot }));
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(r.wind.gusting, None);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 9999.0, unit: Metres }));
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
+    assert_eq!(r.cloud_layers.len(), 1);
+    assert!(r.cloud_layers.contains(&CloudLayer::Overcast(CloudType::Normal, Some(25))));
+    assert_eq!(r.vert_visibility, None);
+    assert_eq!(r.weather.len(), 0);
+    assert_eq!(r.temperature, Known(6));
+    assert_eq!(r.dewpoint, Known(3));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 973.0, unit: Hectopascals }));
 }

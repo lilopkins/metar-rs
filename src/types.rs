@@ -1,3 +1,34 @@
+#[derive(PartialEq, Eq, Clone, Debug, Hash)]
+/// Data that is provided in a metar which might be unknown.
+/// Note that this differs from an `Option<T>` field which is used when data
+/// might not be given at all. In the cases where `Data<T>` is used, data is
+/// usually given but has been replaced in the METAR by slashes, indicating
+/// that it is not known.
+pub enum Data<T> {
+    /// The data is known and given
+    Known(T),
+    /// The data isn't or cannot be known
+    Unknown,
+}
+
+impl<T> Data<T> {
+    /// Unwraps the inner data type, panics otherwise
+    pub fn unwrap(&self) -> &T {
+        match self {
+            Data::Known(v) => v,
+            Data::Unknown => panic!("cannot unwrap unknown data")
+        }
+    }
+
+    /// Mutably unwraps the inner data type, panics otherwise
+    pub fn unwrap_mut(&mut self) -> &mut T {
+        match self {
+            Data::Known(v) => v,
+            Data::Unknown => panic!("cannot unwrap unknown data")
+        }
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// A struct to store time as it is represented in a METAR
 pub struct Time {
@@ -9,16 +40,25 @@ pub struct Time {
     pub minute: u8,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Hash)]
 /// A struct representing the wind speed
-pub enum WindSpeed {
-    /// A wind speed measured in knots
-    Knot(u32),
-    /// A wind speed measured in metres per second
-    MetresPerSecond(u32),
+pub struct WindSpeed {
+    /// The wind speed
+    pub speed: u32,
+    /// The unit used whilst measuring this wind speed
+    pub unit: SpeedUnit,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+/// Units of speed
+pub enum SpeedUnit {
+    /// Nautical miles per hour
+    Knot,
+    /// Metres per second
+    MetresPerSecond,
+}
+
+#[derive(PartialEq, Eq, Clone, Debug, Hash)]
 /// A representation of wind direction
 pub enum WindDirection {
     /// A heading defining wind direction
@@ -31,22 +71,48 @@ pub enum WindDirection {
 
 #[derive(PartialEq, Clone, Debug)]
 /// Horizontal visibility
-pub enum Visibility {
-    /// Visibility in metres
-    Metres(u32),
-    /// Visibility in statute miles
-    StatuteMiles(f32),
-    /// Clouds and Visibility OK (CAVOK)
-    CavOK,
+pub struct Visibility {
+    /// The measured visibility
+    pub visibility: f32,
+    /// The unit this is measured in
+    pub unit: DistanceUnit,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+impl Visibility {
+    /// Returns true if the distance given is considered infinite
+    pub fn is_infinite(&self) -> bool {
+        match self.unit {
+            DistanceUnit::Metres => self.visibility == 9999.0,
+            DistanceUnit::StatuteMiles => self.visibility == 9.9,
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+/// Units of distance
+pub enum DistanceUnit {
+    /// Metres
+    Metres,
+    /// Statute miles, usually used in the US
+    StatuteMiles,
+}
+
+#[derive(PartialEq, Clone, Debug)]
 /// Measured air pressure
-pub enum Pressure {
+pub struct Pressure {
+    /// The air pressure
+    pub pressure: f32,
+    /// The unit this pressure is measured in
+    pub unit: PressureUnit,
+}
+
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+/// Units of air pressure
+pub enum PressureUnit {
     /// Pressure in hectopascals
-    Hectopascals(u32),
+    Hectopascals,
     /// Pressure in inches of mercury (inHg)
-    InchesMercury(u32),
+    InchesMercury,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -59,7 +125,7 @@ pub enum VertVisibility {
     ReducedByUnknownAmount,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Clone, Debug, Hash)]
 /// Cloud state
 pub enum Clouds {
     /// The sky is clear - also set from CavOK
@@ -70,8 +136,6 @@ pub enum Clouds {
     NoSignificantCloud,
     /// Layers of cloud, described elsewhere
     CloudLayers,
-    /// Only used when vertical visibility is set.
-    Undetermined,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -193,9 +257,9 @@ pub enum WeatherCondition {
 /// Wind information
 pub struct Wind {
     /// The wind direction, in degrees
-    pub dir: WindDirection,
+    pub dir: Data<WindDirection>,
     /// The current wind speed
-    pub speed: WindSpeed,
+    pub speed: Data<WindSpeed>,
     /// The direction the wind may be varying between, smaller always comes first
     pub varying: Option<(u32, u32)>,
     /// The gusting speed of the wind

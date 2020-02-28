@@ -106,6 +106,7 @@ mod parsers;
 use std::fmt;
 pub use types::*;
 pub use parsers::errors::*;
+use types::Data::*;
 
 #[derive(PartialEq, Clone, Debug)]
 /// A complete METAR
@@ -117,9 +118,9 @@ pub struct Metar<'a> {
     /// The current wind information
     pub wind: Wind,
     /// The current visibility
-    pub visibility: Visibility,
+    pub visibility: Data<Visibility>,
     /// The current clouds
-    pub clouds: Clouds,
+    pub clouds: Data<Clouds>,
     /// The current clouds
     pub cloud_layers: Vec<CloudLayer>,
     /// The current vertical visibility, in feet
@@ -127,11 +128,11 @@ pub struct Metar<'a> {
     /// The current weather conditions
     pub weather: Vec<Weather>,
     /// The current temperature
-    pub temperature: i32,
+    pub temperature: Data<i32>,
     /// The current dewpoint
-    pub dewpoint: i32,
+    pub dewpoint: Data<i32>,
     /// The current air pressure
-    pub pressure: Pressure,
+    pub pressure: Data<Pressure>,
     /// Any remarks made about the METAR
     pub remarks: Option<&'a str>,
 }
@@ -263,19 +264,19 @@ impl<'a> Metar<'a> {
                 minute: 0,
             },
             wind: Wind {
-                dir: WindDirection::Heading(0),
-                speed: WindSpeed::Knot(0),
+                dir: Unknown,
+                speed: Unknown,
                 varying: None,
                 gusting: None,
             },
-            visibility: Visibility::Metres(10000),
-            clouds: Clouds::SkyClear,
+            visibility: Unknown,
+            clouds: Unknown,
             cloud_layers: Vec::new(),
             vert_visibility: None,
             weather: Vec::new(),
-            temperature: 0,
-            dewpoint: 0,
-            pressure: Pressure::Hectopascals(0),
+            temperature: Unknown,
+            dewpoint: Unknown,
+            pressure: Unknown,
             remarks: None,
         };
 
@@ -333,34 +334,28 @@ impl<'a> Metar<'a> {
                             if let Ok(data) = r {
                                 match data {
                                     parsers::CloudVisibilityInfo::CloudLayer(layer) => {
-                                        metar.clouds = Clouds::CloudLayers;
+                                        metar.clouds = Known(Clouds::CloudLayers);
                                         metar.cloud_layers.push(layer);
                                     },
                                     parsers::CloudVisibilityInfo::Clouds(clouds) => {
-                                        metar.clouds = clouds;
+                                        metar.clouds = Known(clouds);
                                     },
                                     parsers::CloudVisibilityInfo::RVR(..) => {
 
                                     },
                                     parsers::CloudVisibilityInfo::VerticalVisibility(vv) => {
                                         metar.vert_visibility = Some(vv);
-                                        metar.clouds = Clouds::Undetermined;
+                                        metar.clouds = Unknown;
                                     },
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
-                                        match visibility {
-                                            Visibility::StatuteMiles(dist) => {
-                                                match metar.visibility {
-                                                    Visibility::StatuteMiles(prevdist) => {
-                                                        metar.visibility = Visibility::StatuteMiles(prevdist + dist);
-                                                    },
-                                                    _ => {
-                                                        metar.visibility = visibility;
-                                                    }
-                                                }
-                                            },
-                                            _ => {
-                                                metar.visibility = visibility;
+                                        if visibility.unit == DistanceUnit::StatuteMiles {
+                                            if metar.visibility.unwrap().unit == DistanceUnit::StatuteMiles {
+                                                metar.visibility.unwrap_mut().visibility += visibility.visibility;
+                                            } else {
+                                                metar.visibility = Known(visibility);
                                             }
+                                        } else {
+                                            metar.visibility = Known(visibility);
                                         }
                                     },
                                     parsers::CloudVisibilityInfo::Weather(wx) => {
@@ -393,34 +388,28 @@ impl<'a> Metar<'a> {
                             if let Ok(data) = r {
                                 match data {
                                     parsers::CloudVisibilityInfo::CloudLayer(layer) => {
-                                        metar.clouds = Clouds::CloudLayers;
+                                        metar.clouds = Known(Clouds::CloudLayers);
                                         metar.cloud_layers.push(layer);
                                     },
                                     parsers::CloudVisibilityInfo::Clouds(clouds) => {
-                                        metar.clouds = clouds;
+                                        metar.clouds = Known(clouds);
                                     },
                                     parsers::CloudVisibilityInfo::RVR(..) => {
 
                                     },
                                     parsers::CloudVisibilityInfo::VerticalVisibility(vv) => {
                                         metar.vert_visibility = Some(vv);
-                                        metar.clouds = Clouds::Undetermined;
+                                        metar.clouds = Unknown;
                                     },
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
-                                        match visibility {
-                                            Visibility::StatuteMiles(dist) => {
-                                                match metar.visibility {
-                                                    Visibility::StatuteMiles(prevdist) => {
-                                                        metar.visibility = Visibility::StatuteMiles(prevdist + dist);
-                                                    },
-                                                    _ => {
-                                                        metar.visibility = visibility;
-                                                    }
-                                                }
-                                            },
-                                            _ => {
-                                                metar.visibility = visibility;
+                                        if visibility.unit == DistanceUnit::StatuteMiles {
+                                            if metar.visibility.unwrap().unit == DistanceUnit::StatuteMiles {
+                                                metar.visibility.unwrap_mut().visibility += visibility.visibility;
+                                            } else {
+                                                metar.visibility = Known(visibility);
                                             }
+                                        } else {
+                                            metar.visibility = Known(visibility);
                                         }
                                     },
                                     parsers::CloudVisibilityInfo::Weather(wx) => {

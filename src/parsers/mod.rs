@@ -1,158 +1,11 @@
 use super::types::*;
+use super::types::Data::{Known, Unknown};
 
 /// A result with an error case of a 3-tuple containing the start offset, the length and the error
 /// information.
 type ParserResult<T, E> = Result<T, (usize, usize, E)>;
 
-pub mod errors {
-    use std::fmt;
-
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-    /// An error caused whilst parsing the weather station
-    pub enum StationError {
-        /// The station ID is not the correct length
-        IncorrectLength,
-        /// A character was found to be not alphabetic
-        NonAlphabeticCharacter,
-    }
-
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-    /// An error caused when parsing the observation time
-    pub enum ObservationTimeError {
-        /// The observation time is not the correct length
-        IncorrectLength,
-        /// The observation date is not valid
-        DateNotValid,
-        /// The observation hour is not valid
-        HourNotValid,
-        /// The observation minute is not valid
-        MinuteNotValid,
-        /// The specified time zone is not within the ICAO METAR standard
-        InvalidTimeZone,
-    }
-
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-    /// An error caused when parsing the wind
-    pub enum WindError {
-        /// The wind heading is not valid
-        HeadingNotValid,
-        /// The wind speed was not valid
-        SpeedNotValid,
-        /// The wind gusting speed was not valid
-        GustingNotValid,
-        /// An unknown unit was read
-        UnitNotValid,
-    }
-
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-    /// An error caused when parsing the wind varying
-    pub enum WindVaryingError {
-        /// The wind heading is not valid
-        HeadingNotValid,
-        /// Mostly an internal error - informs the calling function that this is not a wind varying
-        /// and should be attempted to be parsed as cloud/visibility information
-        NotWindVarying,
-    }
-
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-    /// An error caused when parsing the cloud and visibility information
-    pub enum CloudVisibilityError {
-        /// The data parsing was attempted upon is unknown in type
-        UnknownData,
-    }
-
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-    /// An error caused when parsing the temperature
-    pub enum TemperatureError {
-        /// The temperature is not valid
-        TemperatureNotValid,
-        /// The dewpoint is not valid
-        DewpointNotValid,
-        /// Mostly an internal error - informs the calling function that this is not a
-        /// temperature/dewpoint pair and should be attempted to be parsed as cloud/visibility
-        /// information
-        NotTemperatureDewpointPair,
-    }
-
-    #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-    /// An error caused when parsing the pressure
-    pub enum PressureError {
-        /// The pressure is not valid
-        PressureNotValid,
-        /// The unit is not valid. Note that this is also returned when a unit is not specified,
-        /// or when the pressure is not long enough to satisfy the requirements of any other unit.
-        UnitNotValid,
-    }
-
-    impl fmt::Display for StationError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Self::IncorrectLength => write!(f, "The station ID was not the correct length."),
-                Self::NonAlphabeticCharacter => write!(f, "Found a non-alphabetic character."),
-            }
-        }
-    }
-
-    impl fmt::Display for ObservationTimeError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Self::IncorrectLength => write!(f, "The observation time was not the correct length."),
-                Self::DateNotValid => write!(f, "The date was invalid."),
-                Self::HourNotValid => write!(f, "The hour was invalid."),
-                Self::MinuteNotValid => write!(f, "The minute was invalid."),
-                Self::InvalidTimeZone => write!(f, "The time zone was invalid (not Zulu)."),
-            }
-        }
-    }
-
-    impl fmt::Display for WindError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Self::HeadingNotValid => write!(f, "The heading is invalid."),
-                Self::SpeedNotValid => write!(f, "The speed is invalid."),
-                Self::GustingNotValid => write!(f, "The gusting speed is invalid."),
-                Self::UnitNotValid => write!(f, "The unit is not valid."),
-            }
-        }
-    }
-
-    impl fmt::Display for WindVaryingError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Self::HeadingNotValid => write!(f, "The heading is invalid."),
-                Self::NotWindVarying => unreachable!(),
-            }
-        }
-    }
-
-    impl fmt::Display for CloudVisibilityError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Self::UnknownData => write!(f, "Unknown data for parsing."),
-            }
-        }
-    }
-
-    impl fmt::Display for TemperatureError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Self::TemperatureNotValid => write!(f, "The temperature is invalid."),
-                Self::DewpointNotValid => write!(f, "The dewpoint is invalid."),
-                Self::NotTemperatureDewpointPair => unreachable!(),
-            }
-        }
-    }
-
-    impl fmt::Display for PressureError {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Self::PressureNotValid => write!(f, "The pressure is invalid."),
-                Self::UnitNotValid => write!(f, "The unit is invalid."),
-            }
-        }
-    }
-}
-
+pub mod errors;
 use errors::*;
 
 pub enum CloudVisibilityInfo {
@@ -249,37 +102,38 @@ pub fn parse_obs_time<'a>(s: &'a str) -> ParserResult<Time, ObservationTimeError
 
 pub fn parse_wind<'a>(s: &'a str) -> ParserResult<Wind, WindError> {
     let mut wind = Wind {
-        dir: WindDirection::Heading(0),
-        speed: WindSpeed::Knot(0),
+        dir: Unknown,
+        speed: Unknown,
         varying: None,
         gusting: None,
     };
 
     let chs: Vec<_> = s.chars().collect();
 
-    if &s[0..3] == "VRB" {
-        wind.dir = WindDirection::Variable;
+    if chs.len() < 7 {
+        return Err((0, s.len(), WindError::IncorrectLength));
+    }
+
+    if &s[0..3] == "///" {
+        wind.dir = Unknown;
+    } else if &s[0..3] == "VRB" {
+        wind.dir = Known(WindDirection::Variable);
     } else if &s[0..3] == "ABV" {
-        wind.dir = WindDirection::Above;
-    } else if !chs[0].is_digit(10) {
-        return Err((0, 1, WindError::HeadingNotValid));
-    } else if !chs[1].is_digit(10) {
-        return Err((1, 1, WindError::HeadingNotValid));
-    } else if !chs[2].is_digit(10) {
-        return Err((2, 1, WindError::HeadingNotValid));
-    } else {
+        wind.dir = Known(WindDirection::Above);
+    } else if chs[0].is_digit(10)
+        && chs[1].is_digit(10)
+        && chs[2].is_digit(10) {
+        
         let heading = s[0..3].parse().unwrap();
         if heading > 360 {
             return Err((0, 3, WindError::HeadingNotValid));
         }
-        wind.dir = WindDirection::Heading(heading);
+        wind.dir = Known(WindDirection::Heading(heading));
     }
 
-    if !chs[3].is_digit(10) {
-        return Err((3, 1, WindError::SpeedNotValid));
-    } else if !chs[4].is_digit(10) {
-        return Err((4, 1, WindError::SpeedNotValid));
-    } else {
+    if chs[3].is_digit(10)
+        && chs[4].is_digit(10) {
+
         let speed = s[3..5].parse().unwrap();
 
         if chs[5] == 'G' {
@@ -292,20 +146,38 @@ pub fn parse_wind<'a>(s: &'a str) -> ParserResult<Wind, WindError> {
 
             let unit = &s[8..];
             if unit == "KT" {
-                wind.speed = WindSpeed::Knot(speed);
-                wind.gusting = Some(WindSpeed::Knot(g_speed));
+                wind.speed = Known(WindSpeed {
+                    speed,
+                    unit: SpeedUnit::Knot,
+                });
+                wind.gusting = Some(WindSpeed {
+                    speed: g_speed,
+                    unit: SpeedUnit::Knot,
+                });
             } else if unit == "MPS" {
-                wind.speed = WindSpeed::MetresPerSecond(speed);
-                wind.gusting = Some(WindSpeed::MetresPerSecond(g_speed));
+                wind.speed = Known(WindSpeed {
+                    speed,
+                    unit: SpeedUnit::MetresPerSecond,
+                });
+                wind.gusting = Some(WindSpeed {
+                    speed: g_speed,
+                    unit: SpeedUnit::MetresPerSecond,
+                });
             } else {
                 return Err((8, unit.len(), WindError::UnitNotValid));
             }
         } else {
             let unit = &s[5..];
             if unit == "KT" {
-                wind.speed = WindSpeed::Knot(speed);
+                wind.speed = Known(WindSpeed {
+                    speed,
+                    unit: SpeedUnit::Knot,
+                });
             } else if unit == "MPS" {
-                wind.speed = WindSpeed::MetresPerSecond(speed);
+                wind.speed = Known(WindSpeed {
+                    speed,
+                    unit: SpeedUnit::MetresPerSecond,
+                });
             } else {
                 return Err((5, unit.len(), WindError::UnitNotValid));
             }
@@ -353,7 +225,10 @@ pub fn parse_wind_varying<'a>(s: &'a str) -> ParserResult<(u32, u32), WindVaryin
 
 pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibilityInfo, CloudVisibilityError> {
     if s == "CAVOK" {
-        return Ok(CloudVisibilityInfo::Visibility(Visibility::CavOK));
+        return Ok(CloudVisibilityInfo::Visibility(Visibility {
+            visibility: 9999.0,
+            unit: DistanceUnit::Metres,
+        }));
     }
 
     // Simple Cloud States
@@ -439,7 +314,10 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
             && chs[2].is_digit(10)
             && chs[3].is_digit(10) {
 
-            return Ok(CloudVisibilityInfo::Visibility(Visibility::Metres(s[0..4].parse().unwrap())));
+            return Ok(CloudVisibilityInfo::Visibility(Visibility {
+                visibility: s[0..4].parse().unwrap(),
+                unit: DistanceUnit::Metres,
+            }));
         }
     }
     if s.ends_with("SM") {
@@ -450,9 +328,15 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
             let numerator: u32 = parts[0].parse().unwrap();
             let denominator: u32 = parts[1].parse().unwrap();
             let fraction: f32 = numerator as f32 / denominator as f32;
-            return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(fraction)));
+            return Ok(CloudVisibilityInfo::Visibility(Visibility {
+                visibility: fraction,
+                unit: DistanceUnit::StatuteMiles,
+            }));
         } else {
-            return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(s.parse().unwrap())));
+            return Ok(CloudVisibilityInfo::Visibility(Visibility {
+                visibility: s.parse().unwrap(),
+                unit: DistanceUnit::StatuteMiles,
+            }));
         }
     }
 
@@ -460,7 +344,10 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     let v = s.parse();
     if v.is_ok() {
         let v: u32 = v.unwrap();
-        return Ok(CloudVisibilityInfo::Visibility(Visibility::StatuteMiles(v as f32)));
+        return Ok(CloudVisibilityInfo::Visibility(Visibility {
+            visibility: v as f32,
+            unit: DistanceUnit::StatuteMiles,
+        }));
     }
 
     if s.len() < 2 {
@@ -573,7 +460,7 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     Ok(CloudVisibilityInfo::Weather(wx))
 }
 
-pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(i32, i32), TemperatureError> {
+pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(Data<i32>, Data<i32>), TemperatureError> {
     let chs: Vec<_> = s.chars().collect();
 
     if s.contains("///") {
@@ -633,12 +520,16 @@ pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(i32, i32), Temperatur
         dewp = s[i .. i + 2].parse().unwrap();
     }
 
-    Ok((temp, dewp))
+    Ok((Known(temp), Known(dewp)))
 }
 
-pub fn parse_pressure<'a>(s: &'a str) -> ParserResult<Pressure, PressureError> {
+pub fn parse_pressure<'a>(s: &'a str) -> ParserResult<Data<Pressure>, PressureError> {
     if s.len() < 5 {
         return Err((1, s.len(), PressureError::UnitNotValid));
+    }
+
+    if s == "/////" {
+        return Ok(Unknown);
     }
 
     let chs: Vec<_> = s.chars().collect();
@@ -659,9 +550,15 @@ pub fn parse_pressure<'a>(s: &'a str) -> ParserResult<Pressure, PressureError> {
     let pressure = s[1..5].parse().unwrap();
 
     if chs[0] == 'Q' {
-        return Ok(Pressure::Hectopascals(pressure));
+        return Ok(Known(Pressure {
+            pressure,
+            unit: PressureUnit::Hectopascals,
+        }));
     } else if chs[0] == 'A' {
-        return Ok(Pressure::InchesMercury(pressure));
+        return Ok(Known(Pressure {
+            pressure,
+            unit: PressureUnit::InchesMercury,
+        }));
     } else {
         return Err((0, 1, PressureError::UnitNotValid));
     }
