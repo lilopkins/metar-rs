@@ -10,7 +10,7 @@ use errors::*;
 
 pub enum CloudVisibilityInfo {
     VerticalVisibility(VertVisibility),
-    Visibility(Visibility),
+    Visibility(Data<Visibility>),
     // TODO: Fully add RVRs
     RVR(),
     Weather(Weather),
@@ -225,10 +225,7 @@ pub fn parse_wind_varying<'a>(s: &'a str) -> ParserResult<(u32, u32), WindVaryin
 
 pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibilityInfo, CloudVisibilityError> {
     if s == "CAVOK" {
-        return Ok(CloudVisibilityInfo::Visibility(Visibility {
-            visibility: 9999.0,
-            unit: DistanceUnit::Metres,
-        }));
+        return Ok(CloudVisibilityInfo::Visibility(Known(Visibility::infinite())));
     }
 
     // Simple Cloud States
@@ -314,10 +311,12 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
             && chs[2].is_digit(10)
             && chs[3].is_digit(10) {
 
-            return Ok(CloudVisibilityInfo::Visibility(Visibility {
+            return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
                 visibility: s[0..4].parse().unwrap(),
                 unit: DistanceUnit::Metres,
-            }));
+            })));
+        } else if s == "////" {
+            return Ok(CloudVisibilityInfo::Visibility(Unknown));
         }
     }
     if s.ends_with("SM") {
@@ -328,15 +327,15 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
             let numerator: u32 = parts[0].parse().unwrap();
             let denominator: u32 = parts[1].parse().unwrap();
             let fraction: f32 = numerator as f32 / denominator as f32;
-            return Ok(CloudVisibilityInfo::Visibility(Visibility {
+            return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
                 visibility: fraction,
                 unit: DistanceUnit::StatuteMiles,
-            }));
+            })));
         } else {
-            return Ok(CloudVisibilityInfo::Visibility(Visibility {
+            return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
                 visibility: s.parse().unwrap(),
                 unit: DistanceUnit::StatuteMiles,
-            }));
+            })));
         }
     }
 
@@ -344,10 +343,10 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     let v = s.parse();
     if v.is_ok() {
         let v: u32 = v.unwrap();
-        return Ok(CloudVisibilityInfo::Visibility(Visibility {
+        return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
             visibility: v as f32,
             unit: DistanceUnit::StatuteMiles,
-        }));
+        })));
     }
 
     if s.len() < 2 {
@@ -463,6 +462,9 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
 pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(Data<i32>, Data<i32>), TemperatureError> {
     let chs: Vec<_> = s.chars().collect();
 
+    if s == "/////" {
+        return Ok((Unknown, Unknown));
+    }
     if s.contains("///") {
         return Err((0, s.len(), TemperatureError::NotTemperatureDewpointPair));
     }
@@ -528,7 +530,9 @@ pub fn parse_pressure<'a>(s: &'a str) -> ParserResult<Data<Pressure>, PressureEr
         return Err((1, s.len(), PressureError::UnitNotValid));
     }
 
-    if s == "/////" {
+    if s == "Q////"
+        || s == "A////" {
+            
         return Ok(Unknown);
     }
 

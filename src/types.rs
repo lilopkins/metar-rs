@@ -79,6 +79,14 @@ pub struct Visibility {
 }
 
 impl Visibility {
+    /// Generate a infinite visibility instance
+    pub fn infinite() -> Self {
+        Visibility {
+            visibility: 9999.0,
+            unit: DistanceUnit::Metres,
+        }
+    }
+
     /// Returns true if the distance given is considered infinite
     pub fn is_infinite(&self) -> bool {
         match self.unit {

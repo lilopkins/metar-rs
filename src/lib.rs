@@ -206,7 +206,7 @@ pub enum ParserError {
 
 /// Find the words in a string by splitting into an array of usize tuples with the start index and
 /// length of each word
-fn find_words<'a>(s: &'a str) -> Vec<(usize, usize)> {
+fn find_words<'a>(s: &'a str) -> Vec<(&'a str, usize, usize)> {
     let mut words = Vec::new();
     let chs: Vec<_> = s.chars().collect();
     let mut start_idx = 0;
@@ -215,7 +215,7 @@ fn find_words<'a>(s: &'a str) -> Vec<(usize, usize)> {
     for i in 0..len {
         if chs[i].is_whitespace() && !last_read_ws {
             last_read_ws = true;
-            words.push((start_idx, i - start_idx));
+            words.push((&s[start_idx..i], start_idx, i - start_idx));
         }
         if !chs[i].is_whitespace() {
             if last_read_ws {
@@ -226,7 +226,7 @@ fn find_words<'a>(s: &'a str) -> Vec<(usize, usize)> {
     }
 
     if !last_read_ws {
-        words.push((start_idx, len - start_idx));
+        words.push((&s[start_idx..], start_idx, len - start_idx));
     }
 
     words
@@ -283,7 +283,7 @@ impl<'a> Metar<'a> {
         let mut state = ParseState::Station;
         let words = find_words(data);
         for word_idx in words {
-            let word = &data[word_idx.0..word_idx.0 + word_idx.1];
+            let word = word_idx.0;
 
             match state {
                 ParseState::Station => {
@@ -292,7 +292,7 @@ impl<'a> Metar<'a> {
                         metar.station = data;
                         state = ParseState::ObservationTime;
                     } else if let Err(e) = r {
-                        return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                        return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
                             state, ParserError::Station(e.2)));
                     }
                 },
@@ -302,7 +302,7 @@ impl<'a> Metar<'a> {
                         metar.time = data;
                         state = ParseState::MethodOrWind;
                     } else if let Err(e) = r {
-                        return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                        return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
                             state, ParserError::ObservationTime(e.2)));
                     }
                 },
@@ -317,7 +317,7 @@ impl<'a> Metar<'a> {
                         metar.wind = data;
                         state = ParseState::WindVaryingOrCloudsVis;
                     } else if let Err(e) = r {
-                        return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                        return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
                             state, ParserError::Wind(e.2)));
                     }
                 },
@@ -348,14 +348,25 @@ impl<'a> Metar<'a> {
                                         metar.clouds = Unknown;
                                     },
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
-                                        if visibility.unit == DistanceUnit::StatuteMiles {
-                                            if metar.visibility.unwrap().unit == DistanceUnit::StatuteMiles {
-                                                metar.visibility.unwrap_mut().visibility += visibility.visibility;
+                                        if visibility == Unknown {
+                                            metar.visibility = Unknown;
+                                            continue;
+                                        }
+                                        if visibility.unwrap().is_infinite() {
+                                            metar.clouds = Known(Clouds::SkyClear);
+                                        }
+                                        if visibility.unwrap().unit == DistanceUnit::StatuteMiles {
+                                            if metar.visibility == Unknown {
+                                                metar.visibility = visibility;
                                             } else {
-                                                metar.visibility = Known(visibility);
+                                                if metar.visibility.unwrap().unit == DistanceUnit::StatuteMiles {
+                                                    metar.visibility.unwrap_mut().visibility += visibility.unwrap().visibility;
+                                                } else {
+                                                    metar.visibility = visibility;
+                                                }
                                             }
                                         } else {
-                                            metar.visibility = Known(visibility);
+                                            metar.visibility = visibility;
                                         }
                                     },
                                     parsers::CloudVisibilityInfo::Weather(wx) => {
@@ -363,14 +374,14 @@ impl<'a> Metar<'a> {
                                     },
                                 };
                             } else if let Err(e) = r {
-                                return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                                return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
                                     state, ParserError::CloudVisibility(e.2)));
                             }
 
                             state = ParseState::CloudVisOrTemps;
                             continue;
                         } else {
-                            return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                            return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
                                 state, ParserError::WindVarying(e.2)));
                         }
                     }
@@ -402,14 +413,25 @@ impl<'a> Metar<'a> {
                                         metar.clouds = Unknown;
                                     },
                                     parsers::CloudVisibilityInfo::Visibility(visibility) => {
-                                        if visibility.unit == DistanceUnit::StatuteMiles {
-                                            if metar.visibility.unwrap().unit == DistanceUnit::StatuteMiles {
-                                                metar.visibility.unwrap_mut().visibility += visibility.visibility;
+                                        if visibility == Unknown {
+                                            metar.visibility = Unknown;
+                                            continue;
+                                        }
+                                        if visibility.unwrap().is_infinite() {
+                                            metar.clouds = Known(Clouds::SkyClear);
+                                        }
+                                        if visibility.unwrap().unit == DistanceUnit::StatuteMiles {
+                                            if metar.visibility == Unknown {
+                                                metar.visibility = visibility;
                                             } else {
-                                                metar.visibility = Known(visibility);
+                                                if metar.visibility.unwrap().unit == DistanceUnit::StatuteMiles {
+                                                    metar.visibility.unwrap_mut().visibility += visibility.unwrap().visibility;
+                                                } else {
+                                                    metar.visibility = visibility;
+                                                }
                                             }
                                         } else {
-                                            metar.visibility = Known(visibility);
+                                            metar.visibility = visibility;
                                         }
                                     },
                                     parsers::CloudVisibilityInfo::Weather(wx) => {
@@ -417,14 +439,14 @@ impl<'a> Metar<'a> {
                                     },
                                 };
                             } else if let Err(e) = r {
-                                return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                                return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
                                     state, ParserError::CloudVisibility(e.2)));
                             }
 
                             state = ParseState::CloudVisOrTemps;
                             continue;
                         } else {
-                            return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                            return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
                                 state, ParserError::Temperature(e.2)));
                         }
                     }
@@ -435,12 +457,12 @@ impl<'a> Metar<'a> {
                         metar.pressure = data;
                         state = ParseState::RemarksOrEnd;
                     } else if let Err(e) = r {
-                        return Err(MetarError::new(data, word_idx.0 + e.0, e.1,
+                        return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
                             state, ParserError::Pressure(e.2)));
                     }
                 },
                 ParseState::RemarksOrEnd => {
-                    metar.remarks = Some(&data[word_idx.0..]);
+                    metar.remarks = Some(&data[word_idx.1..]);
                     break;
                 },
             }
@@ -457,6 +479,6 @@ mod tests {
     #[test]
     fn test_find_words() {
         let r = find_words("The quick brown fox.");
-        assert_eq!(r, [(0, 3), (4, 5), (10, 5), (16, 4)]);
+        assert_eq!(r, [("The", 0, 3), ("quick", 4, 5), ("brown", 10, 5), ("fox.", 16, 4)]);
     }
 }

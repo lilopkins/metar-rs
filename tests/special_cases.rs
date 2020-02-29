@@ -24,8 +24,9 @@ fn test_all_blank() {
     assert_eq!(r.wind.gusting, None);
 
     assert_eq!(r.visibility, Unknown);
-    assert_eq!(r.clouds, Unknown);
-    assert_eq!(r.cloud_layers.len(), 0);
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
+    assert_eq!(r.cloud_layers.len(), 1);
+    assert!(r.cloud_layers.contains(&CloudLayer::Unknown(CloudType::Unknown, None)));
 
     assert_eq!(r.temperature, Unknown);
     assert_eq!(r.dewpoint, Unknown);
