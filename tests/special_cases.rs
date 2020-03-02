@@ -39,4 +39,43 @@ fn test_doesnt_panic_with_bad_pressure() {
     // Test fails automatically if this panics
     let r = Metar::parse(metar);
     assert!(r.is_err());
+    
+    let metar = "EGHI 282120Z 19015KT 140V220 6000 RA SCT006 BKN009 16/14 Q10";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+}
+
+#[test]
+fn test_doesnt_panic_with_bad_temps() {
+    let metar = "EGPC 211650Z 33026G37KT 9999 FEW021 12/7 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+    
+    let metar = "EGPC 211650Z 33026G37KT 9999 FEW021 1/70 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+}
+
+#[test]
+fn test_doesnt_panic_with_bad_visibility() {
+    let metar = "EGPC 211650Z 33026G37KT 1 FEW021 12/7 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+    
+    let metar = "EGPC 211650Z 33026G37KT 100SM FEW021 1/70 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+}
+
+#[test]
+fn test_doesnt_panic_with_bad_wind() {
+    let metar = "EGPC 211650Z 3026KT 9999 FEW021 12/7 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
 }

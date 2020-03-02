@@ -483,6 +483,18 @@ pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(Data<i32>, Data<i32>)
     let temp;
     let dewp;
 
+    if s.len() < 5 {
+        if let Some(pos) = s.find("/") {
+            if pos < 2 {
+                return Err((0, pos, TemperatureError::TemperatureNotValid));
+            } else {
+                return Err((pos + 1, s.len() - pos - 1, TemperatureError::DewpointNotValid));
+            }
+        } else {
+            unreachable!(); // a check earlier in this function prevents this
+        }
+    }
+
     let mut i = 0;
     if chs[i] == 'M' {
         if !chs[i + 1].is_digit(10) {
