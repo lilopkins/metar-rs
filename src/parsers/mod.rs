@@ -27,8 +27,8 @@ pub fn parse_station<'a>(s: &'a str) -> ParserResult<&'a str, StationError> {
     let chs: Vec<_> = s.chars().collect();
     for i in 0..chs.len() {
         let c = chs[i];
-        if !c.is_alphabetic() {
-            return Err((i, 1, StationError::NonAlphabeticCharacter));
+        if !c.is_alphanumeric() {
+            return Err((i, 1, StationError::NonAlphanumericCharacter));
         }
     }
     Ok(s)
