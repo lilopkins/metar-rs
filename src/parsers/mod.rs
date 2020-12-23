@@ -372,6 +372,10 @@ pub fn parse_cloud_visibility_info<'a>(
         // Vicinity
         intensity = WeatherIntensity::InVicinity;
         i += 2;
+    } else if chs[0] == 'R' && chs[1] == 'E' {
+        // Recent
+        intensity = WeatherIntensity::Recent;
+        i += 2;
     } else {
         intensity = WeatherIntensity::Moderate;
     }

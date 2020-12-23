@@ -194,6 +194,8 @@ pub enum WeatherIntensity {
     Heavy,
     /// In the vicinity (VC)
     InVicinity,
+    /// Recent (RE)
+    Recent,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
