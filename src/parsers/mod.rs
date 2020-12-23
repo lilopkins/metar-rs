@@ -321,7 +321,13 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     }
     if s.ends_with("SM") {
         let s = &s[0..s.len() - 2];
-        if s.contains("/") {
+        if chs[0] == 'M' {
+            // Used to report visibility less than 1/4th SM. Just convert it to 0 for now.
+            return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
+                visibility: 0.0,
+                unit: DistanceUnit::StatuteMiles,
+            })));
+        } else if s.contains("/") {
             // Fractional visibilty
             let parts: Vec<_> = s.split("/").collect();
             let numerator: u32 = parts[0].parse().unwrap();

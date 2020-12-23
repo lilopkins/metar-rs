@@ -374,12 +374,12 @@ impl<'a> Metar<'a> {
                                     },
                                 };
                             } else if let Err(e) = r {
-                                return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
-                                    state, ParserError::CloudVisibility(e.2)));
+                                state = ParseState::CloudVisOrTemps;
+                                //return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
+                               //     state, ParserError::CloudVisibility(e.2)));
                             }
 
                             state = ParseState::CloudVisOrTemps;
-                            continue;
                         } else {
                             return Err(MetarError::new(data, word_idx.1 + e.0, e.1,
                                 state, ParserError::WindVarying(e.2)));

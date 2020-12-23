@@ -590,3 +590,97 @@ fn test_metar_17() {
     assert_eq!(r.dewpoint, Known(3));
     assert_eq!(r.pressure, Known(Pressure { pressure: 973.0, unit: Hectopascals }));
 }
+
+#[test]
+fn test_metar_18() {
+    let metar = "KC62 220155Z AUTO 28015G21KT 10SM 03/00 A2971 RMK AO2 T00360000";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+
+    assert_eq!(r.station, "KC62");
+    assert_eq!(r.time.date, 22);
+    assert_eq!(r.time.hour, 01);
+    assert_eq!(r.time.minute, 55);
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(280)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 15, unit: Knot }));
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(r.wind.gusting, Some(WindSpeed { speed: 21, unit: Knot }));
+    assert_eq!(r.visibility, Known(Visibility { visibility: 10.0, unit: StatuteMiles }));
+    assert_eq!(r.clouds, Unknown);
+    assert_eq!(r.cloud_layers.len(), 0);
+    assert_eq!(r.vert_visibility, None);
+    assert_eq!(r.weather.len(), 0);
+    assert_eq!(r.temperature, Known(3));
+    assert_eq!(r.dewpoint, Known(0));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 2971.0, unit: InchesMercury }));
+}
+
+#[test]
+fn test_metar_19() {
+    let metar = "PACZ 220150Z AUTO 11030G43KT M1/4SM +SN FG VV005 M04/M04 A2863 RMK AO2 SLP706";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+
+    assert_eq!(r.station, "PACZ");
+    assert_eq!(r.time.date, 22);
+    assert_eq!(r.time.hour, 01);
+    assert_eq!(r.time.minute, 50);
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(110)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 30, unit: Knot }));
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(r.wind.gusting, Some(WindSpeed { speed: 43, unit: Knot }));
+    assert_eq!(r.visibility, Known(Visibility { visibility: 0.0, unit: StatuteMiles }));
+    assert_eq!(r.clouds, Unknown);
+    assert_eq!(r.cloud_layers.len(), 0);
+    assert_eq!(r.vert_visibility, Some(VertVisibility::Distance(5)));
+    assert_eq!(r.weather.len(), 2);
+    assert!(r.weather.contains(&Weather {
+        intensity: WeatherIntensity::Heavy,
+        conditions: vec![
+            WeatherCondition::Snow,
+        ],
+    }));
+    assert!(r.weather.contains(&Weather {
+        intensity: WeatherIntensity::Moderate,
+        conditions: vec![
+            WeatherCondition::Fog,
+        ],
+    }));
+    assert_eq!(r.temperature, Known(-4));
+    assert_eq!(r.dewpoint, Known(-4));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 2863.0, unit: InchesMercury }));
+}
+
+/* #[test]
+fn test_metar_20() {
+    let metar = "CWPF 220145Z AUTO 25008KT 02/01 RMK AO1 SLP034 T00240009 51016";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+
+    assert_eq!(r.station, "CWPF");
+    assert_eq!(r.time.date, 22);
+    assert_eq!(r.time.hour, 01);
+    assert_eq!(r.time.minute, 45);
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(250)));
+    assert_eq!(r.wind.speed, Known(WindSpeed { speed: 08, unit: Knot }));
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(r.wind.gusting, None);
+    assert_eq!(r.visibility, Known(Visibility { visibility: 6000.0, unit: Metres }));
+    assert_eq!(r.clouds, Unknown);
+    assert_eq!(r.cloud_layers.len(), 0);
+    assert_eq!(r.vert_visibility, None);
+    assert_eq!(r.weather.len(), 0);
+    assert_eq!(r.temperature, Known(2));
+    assert_eq!(r.dewpoint, Known(1));
+    assert_eq!(r.pressure, Known(Pressure { pressure: 2971.0, unit: InchesMercury }));
+}
+*/
