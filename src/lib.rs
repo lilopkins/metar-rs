@@ -133,8 +133,8 @@ pub struct Metar<'a> {
     pub dewpoint: Data<i32>,
     /// The current air pressure
     pub pressure: Data<Pressure>,
-    /// Any remarks made about the METAR
-    pub remarks: Option<&'a str>,
+    /// The current air pressure converted to sea level
+    pub sea_level_pressure: Data<Pressure>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -284,7 +284,7 @@ impl<'a> Metar<'a> {
             temperature: Unknown,
             dewpoint: Unknown,
             pressure: Unknown,
-            remarks: None,
+            sea_level_pressure: Unknown,
         };
 
         let mut state = ParseState::Station;
@@ -414,8 +414,10 @@ impl<'a> Metar<'a> {
                     }
                 }
                 ParseState::RemarksOrEnd => {
-                    metar.remarks = Some(&data[word_idx.1..]);
-                    break;
+                    let r = parsers::parse_sea_level_pressure(word);
+                    if let Ok(data) = r {
+                        metar.sea_level_pressure = data;
+                    }
                 }
             }
         }

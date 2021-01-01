@@ -57,7 +57,6 @@ fn test_metar_1() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -97,7 +96,6 @@ fn test_metar_2() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -154,7 +152,6 @@ fn test_metar_3() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -211,7 +208,6 @@ fn test_metar_4() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -251,7 +247,6 @@ fn test_metar_5() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -307,7 +302,6 @@ fn test_metar_6() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -369,7 +363,6 @@ fn test_metar_7() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -419,7 +412,6 @@ fn test_metar_8() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -472,7 +464,6 @@ fn test_metar_9() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -518,7 +509,13 @@ fn test_metar_10() {
             unit: InchesMercury
         })
     );
-    assert_eq!(r.remarks, Some("AO2 SLP264 T00611028 $"));
+    assert_eq!(
+        r.sea_level_pressure,
+        Known(Pressure {
+            pressure: 1026.4,
+            unit: Hectopascals
+        })
+    );
 }
 
 #[test]
@@ -574,7 +571,13 @@ fn test_metar_11() {
             unit: InchesMercury
         })
     );
-    assert_eq!(r.remarks, Some("AO2 SLP158 T01890133 $"));
+    assert_eq!(
+        r.sea_level_pressure,
+        Known(Pressure {
+            pressure: 1015.8,
+            unit: Hectopascals
+        })
+    );
 }
 
 #[test]
@@ -626,7 +629,6 @@ fn test_metar_12() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -685,7 +687,6 @@ fn test_metar_13() {
             unit: Hectopascals
         })
     );
-    assert_eq!(r.remarks, None);
 }
 
 #[test]
@@ -735,7 +736,7 @@ fn test_metar_14() {
             unit: InchesMercury
         })
     );
-    assert_eq!(r.remarks, Some("AO2 VIS 1/8V1/2 T01610150"));
+    assert_eq!(r.sea_level_pressure, Unknown);
 }
 
 #[test]
@@ -788,7 +789,13 @@ fn test_metar_15() {
             unit: InchesMercury
         })
     );
-    assert_eq!(r.remarks, Some("AO2 SLP165 T01940139 10194 20156 51006"));
+    assert_eq!(
+        r.sea_level_pressure,
+        Known(Pressure {
+            pressure: 1016.5,
+            unit: Hectopascals
+        })
+    );
 }
 
 #[test]
@@ -848,7 +855,7 @@ fn test_metar_16() {
             unit: InchesMercury
         })
     );
-    assert_eq!(r.remarks, Some("AO2 VIS 1 1/2V3 P0002 T01390122 $"));
+    assert_eq!(r.sea_level_pressure, Unknown);
 }
 
 #[test]

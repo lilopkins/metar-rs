@@ -591,3 +591,34 @@ pub fn parse_pressure<'a>(s: &'a str) -> ParserResult<Data<Pressure>, PressureEr
         return Err((0, 1, PressureError::UnitNotValid));
     }
 }
+
+pub fn parse_sea_level_pressure<'a>(s: &'a str) -> ParserResult<Data<Pressure>, PressureError> {
+    if s.len() < 6 {
+        return Err((1, s.len(), PressureError::UnitNotValid));
+    }
+
+    if s == "SLP///" {
+        return Ok(Unknown);
+    }
+
+    let chs: Vec<_> = s.chars().collect();
+
+    if chs[0] == 'S' && chs[1] == 'L' && chs[2] == 'P' {
+        if chs[3].is_digit(10) && chs[4].is_digit(10) && chs[5].is_digit(10) {
+            let mut pressure = s[3..6].parse().unwrap();
+            if pressure >= 550.0 {
+                pressure = pressure / 10.0 + 900.0;
+            } else {
+                pressure = pressure / 10.0 + 1000.0;
+            }
+            return Ok(Known(Pressure {
+                pressure,
+                unit: PressureUnit::Hectopascals,
+            }));
+        } else {
+            return Err((0, 1, PressureError::UnitNotValid));
+        }
+    } else {
+        return Err((0, 1, PressureError::UnitNotValid));
+    }
+}
