@@ -217,34 +217,6 @@ pub enum ParserError {
     Pressure(PressureError),
 }
 
-/// Find the words in a string by splitting into an array of usize tuples with the start index and
-/// length of each word
-fn find_words<'a>(s: &'a str) -> Vec<(&'a str, usize, usize)> {
-    let mut words = Vec::new();
-    let chs: Vec<_> = s.chars().collect();
-    let mut start_idx = 0;
-    let mut last_read_ws = false;
-    let len = chs.len();
-    for i in 0..len {
-        if chs[i].is_whitespace() && !last_read_ws {
-            last_read_ws = true;
-            words.push((&s[start_idx..i], start_idx, i - start_idx));
-        }
-        if !chs[i].is_whitespace() {
-            if last_read_ws {
-                start_idx = i;
-            }
-            last_read_ws = false;
-        }
-    }
-
-    if !last_read_ws {
-        words.push((&s[start_idx..], start_idx, len - start_idx));
-    }
-
-    words
-}
-
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// The state of the parser, used in error messages to describe the expected next occurence when it
 /// wasn't reached.
@@ -288,9 +260,7 @@ impl<'a> Metar<'a> {
         };
 
         let mut state = ParseState::Station;
-        let words = find_words(data);
-        for word_idx in words {
-            let word = word_idx.0;
+        for word in data.split_whitespace() {
 
             match state {
                 ParseState::Station => {
@@ -301,7 +271,7 @@ impl<'a> Metar<'a> {
                     } else if let Err(e) = r {
                         return Err(MetarError::new(
                             data,
-                            word_idx.1 + e.0,
+                            e.0,
                             e.1,
                             state,
                             ParserError::Station(e.2),
@@ -316,7 +286,7 @@ impl<'a> Metar<'a> {
                     } else if let Err(e) = r {
                         return Err(MetarError::new(
                             data,
-                            word_idx.1 + e.0,
+                            e.0,
                             e.1,
                             state,
                             ParserError::ObservationTime(e.2),

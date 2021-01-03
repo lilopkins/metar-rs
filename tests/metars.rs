@@ -1076,3 +1076,54 @@ fn test_metar_21() {
     assert_eq!(r.dewpoint, Known(-1));
     assert_eq!(r.pressure, Unknown);
 }
+
+#[test]
+fn test_metar_22() {
+    let metar = "HRYR 031000Z VRB03KT 9999 BKN023 BKN100 23/16 Q1022 NOSIG";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+    println!("{:#?}", r);
+    assert_eq!(r.station, "HRYR");
+    assert_eq!(r.time.date, 03);
+    assert_eq!(r.time.hour, 10);
+    assert_eq!(r.time.minute, 00);
+    assert_eq!(r.wind.dir, Known(WindDirection::Variable));
+    assert_eq!(
+        r.wind.speed,
+        Known(WindSpeed {
+            speed: 3,
+            unit: Knot
+        })
+    );
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(r.wind.gusting, None);
+    assert_eq!(
+        r.visibility,
+        Known(Visibility {
+            visibility: 9999.0,
+            unit: Metres
+        })
+    );
+    assert_eq!(r.clouds, Known(Clouds::CloudLayers));
+    assert_eq!(r.cloud_layers.len(), 2);
+    assert!(r
+        .cloud_layers
+        .contains(&CloudLayer::Broken(CloudType::Normal, Some(23))));
+    assert!(r
+        .cloud_layers
+        .contains(&CloudLayer::Broken(CloudType::Normal, Some(100))));
+    assert_eq!(r.vert_visibility, None);
+    assert_eq!(r.weather.len(), 0);
+    assert_eq!(r.temperature, Known(23));
+    assert_eq!(r.dewpoint, Known(16));
+    assert_eq!(
+        r.pressure,
+        Known(Pressure {
+            pressure: 1022.0,
+            unit: Hectopascals
+        })
+    );
+}
