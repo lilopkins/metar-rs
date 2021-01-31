@@ -1127,3 +1127,33 @@ fn test_metar_22() {
         })
     );
 }
+
+#[test]
+fn test_metar_23() {
+    let metar = "KGYY 312245Z 02014G26KT 1 SM R30/4500FT -SN OVC006 00/M01 A2999";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+    println!("{:#?}", r);
+    assert_eq!(r.station, "KGYY");
+    assert_eq!(r.time.date, 31);
+    assert_eq!(r.time.hour, 22);
+    assert_eq!(r.time.minute, 45);
+}
+
+#[test]
+fn test_metar_24() {
+    let metar = "KREO 311852Z AUTO 33biÃ<8f><8a>^U$L<9b>/M04 A3020 RMK AO1 SLP242 T00561039";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+    println!("{:#?}", r);
+    assert_eq!(r.station, "KREO");
+    assert_eq!(r.time.date, 31);
+    assert_eq!(r.time.hour, 18);
+    assert_eq!(r.time.minute, 52);
+}

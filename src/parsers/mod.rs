@@ -318,7 +318,7 @@ pub fn parse_cloud_visibility_info<'a>(
             return Ok(CloudVisibilityInfo::Visibility(Unknown));
         }
     }
-    if s.ends_with("SM") {
+    if s.len() > 2 && s.ends_with("SM") {
         let s = &s[0..s.len() - 2];
         if chs[0] == 'M' {
             // Used to report visibility less than 1/4th SM. Just convert it to 0 for now.

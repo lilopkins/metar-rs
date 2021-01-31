@@ -261,6 +261,9 @@ impl<'a> Metar<'a> {
 
         let mut state = ParseState::Station;
         for word in data.split_whitespace() {
+            if !word.is_ascii() {
+                continue;
+            }
 
             match state {
                 ParseState::Station => {
@@ -393,24 +396,5 @@ impl<'a> Metar<'a> {
         }
 
         Ok(metar)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_find_words() {
-        let r = find_words("The quick brown fox.");
-        assert_eq!(
-            r,
-            [
-                ("The", 0, 3),
-                ("quick", 4, 5),
-                ("brown", 10, 5),
-                ("fox.", 16, 4)
-            ]
-        );
     }
 }
