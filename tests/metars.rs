@@ -1157,3 +1157,61 @@ fn test_metar_24() {
     assert_eq!(r.time.hour, 18);
     assert_eq!(r.time.minute, 52);
 }
+
+#[test]
+fn test_metar_25() {
+    let metar = "VASD 021100Z 09007KT 5000 HZ NSC 27/M2 Q1017 NOSIG";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+    println!("{:#?}", r);
+    assert_eq!(r.station, "VASD");
+    assert_eq!(r.time.date, 02);
+    assert_eq!(r.time.hour, 11);
+    assert_eq!(r.time.minute, 00);
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(090)));
+    assert_eq!(
+        r.wind.speed,
+        Known(WindSpeed {
+            speed: 07,
+            unit: Knot
+        })
+    );
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(r.wind.gusting, None);
+    assert_eq!(
+        r.visibility,
+        Known(Visibility {
+            visibility: 5000.0,
+            unit: Metres
+        })
+    );
+}
+
+#[test]
+fn test_metar_26() {
+    let metar = "VASD 021100Z 09007KT 10+SM HZ NSC 27/M2 Q1017 NOSIG";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+    println!("{:#?}", r);
+    assert_eq!(r.station, "VASD");
+    assert_eq!(r.time.date, 02);
+    assert_eq!(r.time.hour, 11);
+    assert_eq!(r.time.minute, 00);
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(090)));
+    assert_eq!(
+        r.wind.speed,
+        Known(WindSpeed {
+            speed: 07,
+            unit: Knot
+        })
+    );
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(r.wind.gusting, None);
+    assert_eq!(r.visibility, Unknown);
+}

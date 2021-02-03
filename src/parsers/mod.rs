@@ -337,10 +337,15 @@ pub fn parse_cloud_visibility_info<'a>(
                 unit: DistanceUnit::StatuteMiles,
             })));
         } else {
-            return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
-                visibility: s.parse().unwrap(),
-                unit: DistanceUnit::StatuteMiles,
-            })));
+            let val = s.parse::<f32>();
+            if let Ok(val) = val {
+                return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
+                    visibility: val,
+                    unit: DistanceUnit::StatuteMiles,
+                })));
+            } else {
+                return Ok(CloudVisibilityInfo::Visibility(Unknown));
+            }
         }
     }
 
@@ -511,6 +516,9 @@ pub fn parse_temperatures<'a>(
 
     let mut i = 0;
     if chs[i] == 'M' {
+        if s.len() <= (i + 2) {
+            return Err((i, 1, TemperatureError::TemperatureNotValid));
+        }
         if !chs[i + 1].is_digit(10) {
             return Err((i + 1, 1, TemperatureError::TemperatureNotValid));
         }
@@ -520,6 +528,9 @@ pub fn parse_temperatures<'a>(
         temp = -1 * s[i + 1..i + 3].parse::<i32>().unwrap();
         i += 4;
     } else {
+        if s.len() <= (i + 1) {
+            return Err((i, 1, TemperatureError::TemperatureNotValid));
+        }
         if !chs[i].is_digit(10) {
             return Err((i, 1, TemperatureError::TemperatureNotValid));
         }
@@ -531,6 +542,9 @@ pub fn parse_temperatures<'a>(
     }
 
     if chs[i] == 'M' {
+        if s.len() <= (i + 2) {
+            return Err((i, 1, TemperatureError::DewpointNotValid));
+        }
         if !chs[i + 1].is_digit(10) {
             return Err((i + 1, 1, TemperatureError::DewpointNotValid));
         }
@@ -539,6 +553,9 @@ pub fn parse_temperatures<'a>(
         }
         dewp = -1 * s[i + 1..i + 3].parse::<i32>().unwrap();
     } else {
+        if s.len() <= (i + 1) {
+            return Err((i, 1, TemperatureError::DewpointNotValid));
+        }
         if !chs[i].is_digit(10) {
             return Err((i, 1, TemperatureError::DewpointNotValid));
         }
