@@ -1215,3 +1215,35 @@ fn test_metar_26() {
     assert_eq!(r.wind.gusting, None);
     assert_eq!(r.visibility, Unknown);
 }
+
+#[test]
+fn test_metar_27() {
+    let metar = "KMCO 071214Z 27016G21KT 2 1/2SMSM +TSRA BKN014 BKN022 OVC046CB 22/22 A2983 RMK TWR VIS 3 PRESFR FRQ LTGICCG OHD AND SW TS OHD AND SW MOV NE P0002 T02220217";
+    let r = Metar::parse(metar).unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        assert!(false);
+        std::process::exit(1);
+    });
+    println!("{:#?}", r);
+    assert_eq!(r.station, "KMCO");
+    assert_eq!(r.time.date, 07);
+    assert_eq!(r.time.hour, 12);
+    assert_eq!(r.time.minute, 14);
+    assert_eq!(r.wind.dir, Known(WindDirection::Heading(270)));
+    assert_eq!(
+        r.wind.speed,
+        Known(WindSpeed {
+            speed: 16,
+            unit: Knot
+        })
+    );
+    assert_eq!(r.wind.varying, None);
+    assert_eq!(
+        r.wind.gusting,
+        Some(WindSpeed {
+            speed: 21,
+            unit: Knot
+        })
+    );
+    assert_eq!(r.visibility, Unknown);
+}
