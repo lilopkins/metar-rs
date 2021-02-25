@@ -16,7 +16,7 @@ impl<T> Data<T> {
     pub fn unwrap(&self) -> &T {
         match self {
             Data::Known(v) => v,
-            Data::Unknown => panic!("cannot unwrap unknown data")
+            Data::Unknown => panic!("cannot unwrap unknown data"),
         }
     }
 
@@ -24,7 +24,7 @@ impl<T> Data<T> {
     pub fn unwrap_mut(&mut self) -> &mut T {
         match self {
             Data::Known(v) => v,
-            Data::Unknown => panic!("cannot unwrap unknown data")
+            Data::Unknown => panic!("cannot unwrap unknown data"),
         }
     }
 }
@@ -194,6 +194,8 @@ pub enum WeatherIntensity {
     Heavy,
     /// In the vicinity (VC)
     InVicinity,
+    /// Recent (RE)
+    Recent,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
