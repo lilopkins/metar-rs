@@ -329,18 +329,17 @@ pub fn parse_cloud_visibility_info<'a>(
         } else if s.contains("/") {
             // Fractional visibilty
             let parts: Vec<_> = s.split("/").collect();
-	    let part0 = parts[0].parse::<f32>();
+            let part0 = parts[0].parse::<f32>();
             let part1 = parts[1].parse::<f32>();
             if let (Ok(numerator), Ok(denominator)) = (part0, part1) {
-            	let fraction: f32 = numerator / denominator;
-            	return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
-                	visibility: fraction,
-                	unit: DistanceUnit::StatuteMiles,
-            	})));
-	    } else {
-		return Ok(CloudVisibilityInfo::Visibility(Unknown));
-
-	    }
+                let fraction: f32 = numerator / denominator;
+                return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
+                    visibility: fraction,
+                    unit: DistanceUnit::StatuteMiles,
+                })));
+            } else {
+                return Ok(CloudVisibilityInfo::Visibility(Unknown));
+            }
         } else {
             let val = s.parse::<f32>();
             if let Ok(val) = val {
