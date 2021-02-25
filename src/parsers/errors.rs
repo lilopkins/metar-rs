@@ -5,8 +5,8 @@ use std::fmt;
 pub enum StationError {
     /// The station ID is not the correct length
     IncorrectLength,
-    /// A character was found to be not alphabetic
-    NonAlphabeticCharacter,
+    /// A character was found to be not alphanumeric
+    NonAlphanumericCharacter,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -83,7 +83,7 @@ impl fmt::Display for StationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::IncorrectLength => write!(f, "The station ID was not the correct length."),
-            Self::NonAlphabeticCharacter => write!(f, "Found a non-alphabetic character."),
+            Self::NonAlphanumericCharacter => write!(f, "Found a non-alphanumeric character."),
         }
     }
 }
