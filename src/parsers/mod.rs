@@ -1,5 +1,5 @@
-use super::types::*;
 use super::types::Data::{Known, Unknown};
+use super::types::*;
 
 /// A result with an error case of a 3-tuple containing the start offset, the length and the error
 /// information.
@@ -27,8 +27,8 @@ pub fn parse_station<'a>(s: &'a str) -> ParserResult<&'a str, StationError> {
     let chs: Vec<_> = s.chars().collect();
     for i in 0..chs.len() {
         let c = chs[i];
-        if !c.is_alphabetic() {
-            return Err((i, 1, StationError::NonAlphabeticCharacter));
+        if !c.is_alphanumeric() {
+            return Err((i, 1, StationError::NonAlphanumericCharacter));
         }
     }
     Ok(s)
@@ -120,10 +120,7 @@ pub fn parse_wind<'a>(s: &'a str) -> ParserResult<Wind, WindError> {
         wind.dir = Known(WindDirection::Variable);
     } else if &s[0..3] == "ABV" {
         wind.dir = Known(WindDirection::Above);
-    } else if chs[0].is_digit(10)
-        && chs[1].is_digit(10)
-        && chs[2].is_digit(10) {
-        
+    } else if chs[0].is_digit(10) && chs[1].is_digit(10) && chs[2].is_digit(10) {
         let heading = s[0..3].parse().unwrap();
         if heading > 360 {
             return Err((0, 3, WindError::HeadingNotValid));
@@ -131,9 +128,7 @@ pub fn parse_wind<'a>(s: &'a str) -> ParserResult<Wind, WindError> {
         wind.dir = Known(WindDirection::Heading(heading));
     }
 
-    if chs[3].is_digit(10)
-        && chs[4].is_digit(10) {
-
+    if chs[3].is_digit(10) && chs[4].is_digit(10) {
         let speed = s[3..5].parse().unwrap();
 
         if chs[5] == 'G' {
@@ -182,6 +177,8 @@ pub fn parse_wind<'a>(s: &'a str) -> ParserResult<Wind, WindError> {
                 return Err((5, unit.len(), WindError::UnitNotValid));
             }
         }
+    } else {
+        return Err((9, 3, WindError::HeadingNotValid));
     }
 
     Ok(wind)
@@ -223,15 +220,17 @@ pub fn parse_wind_varying<'a>(s: &'a str) -> ParserResult<(u32, u32), WindVaryin
     }
 }
 
-pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibilityInfo, CloudVisibilityError> {
+pub fn parse_cloud_visibility_info<'a>(
+    s: &'a str,
+) -> ParserResult<CloudVisibilityInfo, CloudVisibilityError> {
     if s == "CAVOK" {
-        return Ok(CloudVisibilityInfo::Visibility(Known(Visibility::infinite())));
+        return Ok(CloudVisibilityInfo::Visibility(Known(
+            Visibility::infinite(),
+        )));
     }
 
     // Simple Cloud States
-    if s == "CLR"
-        || s == "SKC"{
-
+    if s == "CLR" || s == "SKC" {
         return Ok(CloudVisibilityInfo::Clouds(Clouds::SkyClear));
     }
     if s == "NCD" {
@@ -249,8 +248,8 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
             || &s[0..3] == "SCT"
             || &s[0..3] == "BKN"
             || &s[0..3] == "OVC"
-            || &s[0..3] == "///" {
-
+            || &s[0..3] == "///"
+        {
             let mut cloud_type = CloudType::Normal;
             if s.len() > 6 {
                 let t = &s[6..];
@@ -287,8 +286,7 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
 
     // RVR
     if s.len() >= 2 {
-        if chs[0] == 'R'
-            && chs[1].is_digit(10) {
+        if chs[0] == 'R' && chs[1].is_digit(10) {
             return Ok(CloudVisibilityInfo::RVR());
         }
     }
@@ -297,20 +295,21 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     if s.len() >= 5 {
         if chs[0] == 'V' && chs[1] == 'V' {
             if chs[2].is_digit(10) && chs[3].is_digit(10) && chs[4].is_digit(10) {
-                return Ok(CloudVisibilityInfo::VerticalVisibility(VertVisibility::Distance(s[2..5].parse().unwrap())));
+                return Ok(CloudVisibilityInfo::VerticalVisibility(
+                    VertVisibility::Distance(s[2..5].parse().unwrap()),
+                ));
             } else {
-                return Ok(CloudVisibilityInfo::VerticalVisibility(VertVisibility::ReducedByUnknownAmount));
+                return Ok(CloudVisibilityInfo::VerticalVisibility(
+                    VertVisibility::ReducedByUnknownAmount,
+                ));
             }
         }
     }
 
     // Visibility
     if s.len() >= 4 {
-        if chs[0].is_digit(10)
-            && chs[1].is_digit(10)
-            && chs[2].is_digit(10)
-            && chs[3].is_digit(10) {
-
+        if chs[0].is_digit(10) && chs[1].is_digit(10) && chs[2].is_digit(10) && chs[3].is_digit(10)
+        {
             return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
                 visibility: s[0..4].parse().unwrap(),
                 unit: DistanceUnit::Metres,
@@ -319,23 +318,38 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
             return Ok(CloudVisibilityInfo::Visibility(Unknown));
         }
     }
-    if s.ends_with("SM") {
+    if s.len() > 2 && s.ends_with("SM") {
         let s = &s[0..s.len() - 2];
-        if s.contains("/") {
+        if chs[0] == 'M' {
+            // Used to report visibility less than 1/4th SM. Just convert it to 0 for now.
+            return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
+                visibility: 0.0,
+                unit: DistanceUnit::StatuteMiles,
+            })));
+        } else if s.contains("/") {
             // Fractional visibilty
             let parts: Vec<_> = s.split("/").collect();
-            let numerator: u32 = parts[0].parse().unwrap();
-            let denominator: u32 = parts[1].parse().unwrap();
-            let fraction: f32 = numerator as f32 / denominator as f32;
-            return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
-                visibility: fraction,
-                unit: DistanceUnit::StatuteMiles,
-            })));
+            let part0 = parts[0].parse::<f32>();
+            let part1 = parts[1].parse::<f32>();
+            if let (Ok(numerator), Ok(denominator)) = (part0, part1) {
+                let fraction: f32 = numerator / denominator;
+                return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
+                    visibility: fraction,
+                    unit: DistanceUnit::StatuteMiles,
+                })));
+            } else {
+                return Ok(CloudVisibilityInfo::Visibility(Unknown));
+            }
         } else {
-            return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
-                visibility: s.parse().unwrap(),
-                unit: DistanceUnit::StatuteMiles,
-            })));
+            let val = s.parse::<f32>();
+            if let Ok(val) = val {
+                return Ok(CloudVisibilityInfo::Visibility(Known(Visibility {
+                    visibility: val,
+                    unit: DistanceUnit::StatuteMiles,
+                })));
+            } else {
+                return Ok(CloudVisibilityInfo::Visibility(Unknown));
+            }
         }
     }
 
@@ -363,10 +377,13 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     } else if chs[0] == '-' {
         intensity = WeatherIntensity::Light;
         i += 1;
-    } else if chs[0] == 'V'
-        && chs[1] == 'C' {
+    } else if chs[0] == 'V' && chs[1] == 'C' {
         // Vicinity
         intensity = WeatherIntensity::InVicinity;
+        i += 2;
+    } else if chs[0] == 'R' && chs[1] == 'E' {
+        // Recent
+        intensity = WeatherIntensity::Recent;
         i += 2;
     } else {
         intensity = WeatherIntensity::Moderate;
@@ -459,7 +476,9 @@ pub fn parse_cloud_visibility_info<'a>(s: &'a str) -> ParserResult<CloudVisibili
     Ok(CloudVisibilityInfo::Weather(wx))
 }
 
-pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(Data<i32>, Data<i32>), TemperatureError> {
+pub fn parse_temperatures<'a>(
+    s: &'a str,
+) -> ParserResult<(Data<i32>, Data<i32>), TemperatureError> {
     let chs: Vec<_> = s.chars().collect();
 
     if s == "/////" {
@@ -488,7 +507,11 @@ pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(Data<i32>, Data<i32>)
             if pos < 2 {
                 return Err((0, pos, TemperatureError::TemperatureNotValid));
             } else {
-                return Err((pos + 1, s.len() - pos - 1, TemperatureError::DewpointNotValid));
+                return Err((
+                    pos + 1,
+                    s.len() - pos - 1,
+                    TemperatureError::DewpointNotValid,
+                ));
             }
         } else {
             unreachable!(); // a check earlier in this function prevents this
@@ -497,41 +520,53 @@ pub fn parse_temperatures<'a>(s: &'a str) -> ParserResult<(Data<i32>, Data<i32>)
 
     let mut i = 0;
     if chs[i] == 'M' {
+        if s.len() <= (i + 2) {
+            return Err((i, 1, TemperatureError::TemperatureNotValid));
+        }
         if !chs[i + 1].is_digit(10) {
             return Err((i + 1, 1, TemperatureError::TemperatureNotValid));
         }
         if !chs[i + 2].is_digit(10) {
             return Err((i + 2, 1, TemperatureError::TemperatureNotValid));
         }
-        temp = -1 * s[i + 1 .. i + 3].parse::<i32>().unwrap();
+        temp = -1 * s[i + 1..i + 3].parse::<i32>().unwrap();
         i += 4;
     } else {
+        if s.len() <= (i + 1) {
+            return Err((i, 1, TemperatureError::TemperatureNotValid));
+        }
         if !chs[i].is_digit(10) {
             return Err((i, 1, TemperatureError::TemperatureNotValid));
         }
         if !chs[i + 1].is_digit(10) {
             return Err((i + 1, 1, TemperatureError::TemperatureNotValid));
         }
-        temp = s[i .. i + 2].parse().unwrap();
+        temp = s[i..i + 2].parse().unwrap();
         i += 3;
     }
 
     if chs[i] == 'M' {
+        if s.len() <= (i + 2) {
+            return Err((i, 1, TemperatureError::DewpointNotValid));
+        }
         if !chs[i + 1].is_digit(10) {
             return Err((i + 1, 1, TemperatureError::DewpointNotValid));
         }
         if !chs[i + 2].is_digit(10) {
             return Err((i + 2, 1, TemperatureError::DewpointNotValid));
         }
-        dewp = -1 * s[i + 1 .. i + 3].parse::<i32>().unwrap();
+        dewp = -1 * s[i + 1..i + 3].parse::<i32>().unwrap();
     } else {
+        if s.len() <= (i + 1) {
+            return Err((i, 1, TemperatureError::DewpointNotValid));
+        }
         if !chs[i].is_digit(10) {
             return Err((i, 1, TemperatureError::DewpointNotValid));
         }
         if !chs[i + 1].is_digit(10) {
             return Err((i + 1, 1, TemperatureError::DewpointNotValid));
         }
-        dewp = s[i .. i + 2].parse().unwrap();
+        dewp = s[i..i + 2].parse().unwrap();
     }
 
     Ok((Known(temp), Known(dewp)))
@@ -542,9 +577,7 @@ pub fn parse_pressure<'a>(s: &'a str) -> ParserResult<Data<Pressure>, PressureEr
         return Err((1, s.len(), PressureError::UnitNotValid));
     }
 
-    if s == "Q////"
-        || s == "A////" {
-            
+    if s == "Q////" || s == "A////" {
         return Ok(Unknown);
     }
 
@@ -575,6 +608,37 @@ pub fn parse_pressure<'a>(s: &'a str) -> ParserResult<Data<Pressure>, PressureEr
             pressure,
             unit: PressureUnit::InchesMercury,
         }));
+    } else {
+        return Err((0, 1, PressureError::UnitNotValid));
+    }
+}
+
+pub fn parse_sea_level_pressure<'a>(s: &'a str) -> ParserResult<Data<Pressure>, PressureError> {
+    if s.len() < 6 {
+        return Err((1, s.len(), PressureError::UnitNotValid));
+    }
+
+    if s == "SLP///" {
+        return Ok(Unknown);
+    }
+
+    let chs: Vec<_> = s.chars().collect();
+
+    if chs[0] == 'S' && chs[1] == 'L' && chs[2] == 'P' {
+        if chs[3].is_digit(10) && chs[4].is_digit(10) && chs[5].is_digit(10) {
+            let mut pressure = s[3..6].parse().unwrap();
+            if pressure >= 550.0 {
+                pressure = pressure / 10.0 + 900.0;
+            } else {
+                pressure = pressure / 10.0 + 1000.0;
+            }
+            return Ok(Known(Pressure {
+                pressure,
+                unit: PressureUnit::Hectopascals,
+            }));
+        } else {
+            return Err((0, 1, PressureError::UnitNotValid));
+        }
     } else {
         return Err((0, 1, PressureError::UnitNotValid));
     }

@@ -1,0 +1,69 @@
+metar = station ' ' observationtime ' ' [ method ' ' ] wind ' ' wind_varying cloudsvis ' ' temps ' ' pressure remark
+
+station = letter letter letter letter
+
+method = 'AUTO' / 'COR'
+
+observationtime = obs_day obs_hour obs_minute 'Z'
+obs_day = obs_day_1 DIGIT / '3' obs_day_2
+obs_day_1 = '0' / '1' / '2'
+obs_day_2 = '0' / '1'
+obs_hour = obs_hour_1 DIGIT / '2' obs_hour_2
+obs_hour_1 = '0' / '1'
+obs_hour_2 = '0' / '1' / '2' / '3'
+obs_minute = obs_minute_1 DIGIT
+obs_minute_1 = '0' / '1' / '2' / '3' / '4' / '5'
+
+wind = wind_dir DIGIT DIGIT wind_gusts 'KT'
+	 / wind_dir DIGIT DIGIT wind_gusts 'MPS'
+wind_dir = angle / 'VRB' / ''
+wind_gusts = [ 'G' DIGIT DIGIT ]
+
+wind_varying = '' / angle 'V' angle ' '
+
+angle = angle_1 DIGIT DIGIT / '3' angle_2 DIGIT / '360'
+angle_1 = '0' / '1' / '2'
+angle_2 = '0' / '1' / '2' / '3' / '4' / '5'
+
+cloudsvis = 'CAVOK' / visibility rvr weather clouds
+visibility = [ 'M' ] DIGIT DIGIT DIGIT DIGIT
+           / [ 'M' ] DIGIT DIGIT 'SM'
+clouds = 'CLR' / 'SKC' / 'NCD' / 'NSC' / cloud_description_list / vertical_visibility
+rvr = 0*rvr_entry
+rvr_entry = 'R' runway_number '/' rvr_vis rvr_trend
+runway_number = angle_1 DIGIT [ runway_modifier ] / '3' angle_2 [ runway_modifier ]
+runway_modifier = 'L' / 'C' / 'R'
+rvr_vis = 'P' DIGIT DIGIT DIGIT DIGIT / 'M' DIGIT DIGIT DIGIT DIGIT
+rvr_trend = 'D' / 'U' / 'N'
+
+cloud_description_list = 0*cloud_description
+cloud_description = cloud_density cloud_floor cloud_type
+cloud_density = 'FEW' / 'SCT' / 'BKN' / 'OVC' / '///'
+cloud_floor = DIGIT DIGIT DIGIT / '///'
+cloud_type = '' / 'CB' / 'TCU' / '///'
+
+vertical_visibility = 'VV' vertical_visibility_distance
+vertical_visibility_distance = '///' / DIGIT DIGIT DIGIT
+
+weather = 0*weather_cond
+weather_cond = weather_intesity weather_descriptor weather_preceipitation
+				 / weather_obscuration
+				 / weather_other
+				 / weather_preceipitation weather_timing
+weather_intesity = '' / '+' / '-' / 'VC'
+weather_descriptor = '' / 'MI' / 'PR' / 'BC' / 'DR' / 'BL' / 'SH' / 'TS' / 'FZ'
+weather_preceipitation = 'RA' / 'DZ' / 'SN' / 'SG' / 'IC' / 'PL' / 'GR' / 'GS' / 'UP'
+weather_obscuration = 'FG' / 'VA' / 'BR' / 'HZ' / 'DU' / 'FU' / 'SA' / 'PY'
+weather_other = 'SQ' / 'PO' / 'DS' / 'SS' / 'FC'
+weather_timing = 'B' weather_timing_time 'E' weather_timing_time
+				   / 'B' weather_timing_time
+				   / 'E' weather_timing_time
+weather_timing_time = DIGIT DIGIT / DIGIT DIGIT DIGIT DIGIT
+
+
+temps = temperature '/' temperature
+temperature = [ 'M' ] DIGIT DIGIT
+
+pressure = ( 'Q' / 'A' ) DIGIT DIGIT DIGIT DIGIT
+
+remark = ' RMK' ...
