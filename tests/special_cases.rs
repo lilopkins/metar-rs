@@ -25,7 +25,7 @@ fn test_all_blank() {
 
     assert_eq!(r.visibility, Unknown);
     assert_eq!(r.clouds, Known(Clouds::CloudLayers));
-    assert_eq!(r.cloud_layers.len(), 2);
+    assert_eq!(r.cloud_layers.len(), 1);
     assert!(r
         .cloud_layers
         .contains(&CloudLayer::Unknown(CloudType::Unknown, None)));
@@ -33,4 +33,51 @@ fn test_all_blank() {
     assert_eq!(r.temperature, Unknown);
     assert_eq!(r.dewpoint, Unknown);
     assert_eq!(r.pressure, Unknown);
+}
+
+#[test]
+fn test_doesnt_panic_with_bad_pressure() {
+    let metar = "EGHI 282120Z 19015KT 140V220 6000 RA SCT006 BKN009 16/14 1006";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+
+    let metar = "EGHI 282120Z 19015KT 140V220 6000 RA SCT006 BKN009 16/14 Q10";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+}
+
+#[test]
+fn test_doesnt_panic_with_bad_temps() {
+    let metar = "EGPC 211650Z 33026G37KT 9999 FEW021 12/7 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+
+    let metar = "EGPC 211650Z 33026G37KT 9999 FEW021 1/70 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+}
+
+#[test]
+fn test_doesnt_panic_with_bad_visibility() {
+    let metar = "EGPC 211650Z 33026G37KT 1 FEW021 12/7 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+
+    let metar = "EGPC 211650Z 33026G37KT 100SM FEW021 1/70 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
+}
+
+#[test]
+fn test_doesnt_panic_with_bad_wind() {
+    let metar = "EGPC 211650Z 3026KT 9999 FEW021 12/7 Q1026";
+    // Test fails automatically if this panics
+    let r = Metar::parse(metar);
+    assert!(r.is_err());
 }

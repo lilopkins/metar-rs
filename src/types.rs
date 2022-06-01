@@ -41,21 +41,27 @@ pub struct Time {
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
-/// A struct representing the wind speed
-pub struct WindSpeed {
-    /// The wind speed
-    pub speed: u32,
-    /// The unit used whilst measuring this wind speed
-    pub unit: SpeedUnit,
+/// The wind speed
+pub enum WindSpeed {
+    /// Winds calm
+    Calm,
+    /// Nautical miles per hour
+    Knot(u32),
+    /// Metres per second
+    MetresPerSecond(u32),
+    /// Kilometres per hour
+    KilometresPerHour(u32),
 }
 
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
-/// Units of speed
-pub enum SpeedUnit {
-    /// Nautical miles per hour
-    Knot,
-    /// Metres per second
-    MetresPerSecond,
+impl WindSpeed {
+    pub(crate) fn clone_changing_contents(&self, new_contents: u32) -> Self {
+        match self {
+            WindSpeed::Calm => WindSpeed::Calm,
+            WindSpeed::Knot(_) => WindSpeed::Knot(new_contents),
+            WindSpeed::MetresPerSecond(_) => WindSpeed::MetresPerSecond(new_contents),
+            WindSpeed::KilometresPerHour(_) => WindSpeed::KilometresPerHour(new_contents),
+        }
+    }
 }
 
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
@@ -71,56 +77,22 @@ pub enum WindDirection {
 
 #[derive(PartialEq, Clone, Debug)]
 /// Horizontal visibility
-pub struct Visibility {
-    /// The measured visibility
-    pub visibility: f32,
-    /// The unit this is measured in
-    pub unit: DistanceUnit,
-}
-
-impl Visibility {
-    /// Generate a infinite visibility instance
-    pub fn infinite() -> Self {
-        Visibility {
-            visibility: 9999.0,
-            unit: DistanceUnit::Metres,
-        }
-    }
-
-    /// Returns true if the distance given is considered infinite
-    pub fn is_infinite(&self) -> bool {
-        match self.unit {
-            DistanceUnit::Metres => self.visibility == 9999.0,
-            DistanceUnit::StatuteMiles => self.visibility == 9.9,
-        }
-    }
-}
-
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
-/// Units of distance
-pub enum DistanceUnit {
+pub enum Visibility {
+    /// Visibility OK
+    CAVOK,
     /// Metres
-    Metres,
+    Metres(u16),
     /// Statute miles, usually used in the US
-    StatuteMiles,
+    StatuteMiles(f32),
 }
 
 #[derive(PartialEq, Clone, Debug)]
 /// Measured air pressure
-pub struct Pressure {
-    /// The air pressure
-    pub pressure: f32,
-    /// The unit this pressure is measured in
-    pub unit: PressureUnit,
-}
-
-#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
-/// Units of air pressure
-pub enum PressureUnit {
+pub enum Pressure {
     /// Pressure in hectopascals
-    Hectopascals,
+    Hectopascals(u16),
     /// Pressure in inches of mercury (inHg)
-    InchesMercury,
+    InchesOfMercury(f32),
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -136,9 +108,7 @@ pub enum VertVisibility {
 #[derive(PartialEq, Eq, Clone, Debug, Hash)]
 /// Cloud state
 pub enum Clouds {
-    /// The sky is clear - also set from CavOK
-    SkyClear,
-    /// No cloud was detected
+    /// No cloud was detected, also set for CAVOK
     NoCloudDetected,
     /// No significant cloud was detected below 5000ft
     NoSignificantCloud,
@@ -201,70 +171,70 @@ pub enum WeatherIntensity {
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// Descriptor of weather
 pub enum WeatherCondition {
-    /// [Descriptor] Shallow (MI)
+    /// Descriptor - Shallow (MI)
     Shallow,
-    /// [Descriptor] Partial (PR)
+    /// Descriptor - Partial (PR)
     Partial,
-    /// [Descriptor] Patches (BC)
+    /// Descriptor - Patches (BC)
     Patches,
-    /// [Descriptor] Low drifting (DR)
+    /// Descriptor - Low drifting (DR)
     LowDrifting,
-    /// [Descriptor] Blowing (BL)
+    /// Descriptor - Blowing (BL)
     Blowing,
-    /// [Descriptor] Showers (SH)
+    /// Descriptor - Showers (SH)
     Showers,
-    /// [Descriptor] Thunderstorm (TS)
+    /// Descriptor - Thunderstorm (TS)
     Thunderstorm,
-    /// [Descriptor] Freezing (FZ)
+    /// Descriptor - Freezing (FZ)
     Freezing,
-    /// [Precipitation] Rain (RA)
+    /// Precipitation - Rain (RA)
     Rain,
-    /// [Precipitation] Drizzle (DZ)
+    /// Precipitation - Drizzle (DZ)
     Drizzle,
-    /// [Precipitation] Snow (SN)
+    /// Precipitation - Snow (SN)
     Snow,
-    /// [Precipitation] Snow Grains (SG)
+    /// Precipitation - Snow Grains (SG)
     SnowGrains,
-    /// [Precipitation] Ice Crystals (IC)
+    /// Precipitation - Ice Crystals (IC)
     IceCrystals,
-    /// [Precipitation] Ice pellets (PL)
+    /// Precipitation - Ice pellets (PL)
     IcePellets,
-    /// [Precipitation] Hail (including small hail in the US) (GR)
+    /// Precipitation - Hail (including small hail in the US) (GR)
     Hail,
-    /// [Precipitation] Snow Pellets and/or Small Hail (except in US) (GS)
+    /// Precipitation - Snow Pellets and/or Small Hail (except in US) (GS)
     SnowPelletsOrSmallHail,
-    /// [Precipitation] Unknown precipitation (UP)
+    /// Precipitation - Unknown precipitation (UP)
     UnknownPrecipitation,
-    /// [Obscuration] Fog (FG)
+    /// Obscuration - Fog (FG)
     Fog,
-    /// [Obscuration] Volcanic Ash (VA)
+    /// Obscuration - Volcanic Ash (VA)
     VolcanicAsh,
-    /// [Obscuration] Mist (BR)
+    /// Obscuration - Mist (BR)
     Mist,
-    /// [Obscuration] Haze (HZ)
+    /// Obscuration - Haze (HZ)
     Haze,
-    /// [Obscuration] Widespread dust (DU)
+    /// Obscuration - Widespread dust (DU)
     WidespreadDust,
-    /// [Obscuration] Smoke (FU)
+    /// Obscuration - Smoke (FU)
     Smoke,
-    /// [Obscuration] Sand (SA)
+    /// Obscuration - Sand (SA)
     Sand,
-    /// [Obscuration] Spray (PY)
+    /// Obscuration - Spray (PY)
     Spray,
-    /// [Other] Squall (SQ)
+    /// Other - Squall (SQ)
     Squall,
-    /// [Other] Dust or Sand Whirls (PO)
+    /// Other - Dust or Sand Whirls (PO)
     Dust,
-    /// [Other] Duststorm (DS)
+    /// Other - Duststorm (DS)
     Duststorm,
-    /// [Other] Sandstorm (SS)
+    /// Other - Sandstorm (SS)
     Sandstorm,
-    /// [Other] Funnel Cloud (FC)
+    /// Other - Funnel Cloud (FC)
     FunnelCloud,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
-/// Wind information
+/// Wind information.
 pub struct Wind {
     /// The wind direction, in degrees
     pub dir: Data<WindDirection>,

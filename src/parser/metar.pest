@@ -1,0 +1,226 @@
+metar = {
+    SOI ~
+    station ~
+    observation_time ~
+    (method)? ~
+    wind ~
+    (wind_varying)? ~
+    atmos_condition ~
+    temperatures ~
+    pressure ~
+    (recents)? ~ 
+    (windshear)? ~
+    (runway_state)* ~
+    (trend)? ~
+    (remarks)? ~
+    "="? ~
+    EOI
+}
+
+station = @{
+    ASCII_ALPHA_UPPER{4}
+}
+
+observation_time = {
+    observation_day ~
+    observation_hour ~
+    observation_minute ~
+    "Z"
+}
+
+observation_day = @{
+    (( '0'..'2' ) ~ ASCII_DIGIT) |
+    ("3" ~ ( "0" | "1" ))
+}
+
+observation_hour = @{
+    (( "0" | "1" ) ~ ASCII_DIGIT) |
+    ("2" ~ ( '0'..'3' ))
+}
+
+observation_minute = @{
+    ('0'..'5') ~ ASCII_DIGIT
+}
+
+method = @{
+    "AUTO" | "COR"
+}
+
+wind = ${
+    "CALM" |
+    (wind_dir ~
+    wind_speed ~
+    wind_gusts? ~ wind_unit)
+}
+
+wind_dir = @{
+    "///" |
+    "VRB" |
+    (('0'..'2') ~ ASCII_DIGIT{2}) |
+    ("3" ~ ('0'..'6') ~ ASCII_DIGIT)
+}
+
+wind_speed = @{
+    "//" |
+    ("P"? ~ ASCII_DIGIT{2,3})
+}
+
+wind_gusts = @{
+    "G" ~ ASCII_DIGIT{2}
+}
+
+wind_unit = @{
+    "KT" | "MPS" | "KPH"
+}
+
+wind_varying = ${
+    wind_dir ~ "V" ~ wind_dir
+}
+
+atmos_condition = {
+    "CAVOK" |
+    "SKC" |
+    (visibility_horizontal ~
+     ("CLR" |
+      (rvr)* ~
+      (wx)* ~
+      (visibility_vertical)? ~
+      ("NSC" | (cloud)*)))
+}
+
+visibility_horizontal = @{
+    "////" |
+    (ASCII_DIGIT{4}) |
+    (ASCII_DIGIT{1,2} ~ "SM") |
+    (ASCII_DIGIT ~ " " ~ ASCII_DIGIT ~ "/" ~ ASCII_DIGIT ~ "SM") |
+    (ASCII_DIGIT ~ "/" ~ ASCII_DIGIT ~ "SM")
+}
+
+visibility_vertical = @{
+    "VV" ~ ("///" | ASCII_DIGIT{3})
+}
+
+rvr = ${
+    "R" ~ runway_number ~ "/" ~ rvr_visibility ~ rvr_trend?
+}
+
+runway_number = @{
+    (('0'..'2') ~ ASCII_DIGIT ~ runway_suffix?) |
+    ("3" ~ ('0'..'6') ~ runway_suffix?)
+}
+
+runway_suffix = @{
+    "L" | "C" | "R"
+}
+
+rvr_visibility = @{
+    ("P" | "M")? ~
+    ASCII_DIGIT{4} ~
+    ("V" ~ ASCII_DIGIT{4})? ~
+    "FT"?
+}
+
+rvr_trend = @{
+    "D" | "U" | "N"
+}
+
+wx = ${
+    wx_intensity? ~ wx_condition+
+}
+
+wx_intensity = @{
+    "+" | "-" | "VC"
+}
+
+wx_condition = @{
+    "MI" | "PR" | "BC" | "DR" | "BL" | "SH" | "TS" | "FZ" |
+    "RA" | "DZ" | "SN" | "SG" | "IC" | "PL" | "GR" | "GS" |
+    "UP" | "FG" | "VA" | "BR" | "HZ" | "DU" | "FU" | "SA" |
+    "PY" | "SQ" | "PO" | "DS" | "SS" | "FC"
+}
+
+cloud = ${
+    cloud_density ~ cloud_floor ~ cloud_type?
+}
+
+cloud_density = @{
+    "///" | "FEW" | "SCT" | "BKN" | "OVC"
+}
+
+cloud_floor = @{
+    "///" |
+    ASCII_DIGIT{3}
+}
+
+cloud_type = @{
+    "///" | "CB" | "TCU"
+}
+
+temperatures = ${
+    temperature ~ "/" ~ temperature
+}
+
+temperature = @{
+    "//" | ("M"? ~ ASCII_DIGIT{2})
+}
+
+pressure = @{
+    ("Q" | "A") ~
+    (ASCII_DIGIT{4} | "////")
+}
+
+recents = ${
+    "RE" ~ wx_condition
+}
+
+windshear = {
+    "WS ALL RWY" |
+    "WS" ~ windshear_group+
+}
+
+windshear_group = @{
+    "TKOF RWY " ~ runway_number
+}
+
+runway_state = {
+    "R" ~ runway_number ~
+    ("CLRD" | "/" ~ runway_deposits ~ runway_contamination ~ runway_deposit_depth) ~
+    runway_braking_action
+}
+
+runway_deposits = @{
+    "/" | '0'..'9'
+}
+
+runway_contamination = @{
+    "1" | "2" | "5" | "9" | "/"
+}
+
+runway_deposit_depth = @{
+    ASCII_DIGIT{2} | "//"
+}
+
+runway_braking_action = @{
+    "28" |
+    "38" |
+    ("9" ~ ('1'..'5' | "9")) |
+    "//"
+}
+
+trend = @{
+    "NOSIG" |
+    "NSW" |
+    "BECMG" ~ wx_change |
+    "TEMPO" ~ wx_change
+}
+
+wx_change = @{
+    ("FM" | "TL" | "AT") ~ ASCII_DIGIT{4}
+}
+
+remarks = {
+    "RMK " ~
+    (ASCII_ALPHANUMERIC | "$" | "/")*
+}
+
+WHITESPACE = _{ " " }
