@@ -30,7 +30,6 @@ impl<'a> super::MetarError<'a> {
 
 pub(crate) fn parse<'a>(data: &'a str) -> Result<super::Metar, super::MetarError> {
     let res = MetarParser::parse(Rule::metar, data);
-    println!("{:#?}", res);
     res.map(|mut pairs| {
         let metar_pair = pairs.next().unwrap();
         metar_pair.into()

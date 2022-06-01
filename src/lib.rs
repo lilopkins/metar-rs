@@ -53,8 +53,8 @@ pub struct Metar<'a> {
     pub dewpoint: Data<i32>,
     /// The current air pressure
     pub pressure: Data<Pressure>,
-    /// The current air pressure converted to sea level
-    pub sea_level_pressure: Data<Pressure>,
+    /// Remarks added on to the METAR
+    pub remarks: Option<&'a str>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]

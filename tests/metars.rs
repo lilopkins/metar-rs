@@ -238,7 +238,7 @@ fn test_metar_7() {
         .cloud_layers
         .contains(&CloudLayer::Broken(CloudType::Normal, Some(10))));
     assert_eq!(r.vert_visibility, None);
-    assert_eq!(r.weather.len(), 2);
+    assert_eq!(r.weather.len(), 1);
     assert!(r.weather.contains(&Weather {
         intensity: WeatherIntensity::Light,
         conditions: vec![WeatherCondition::Rain,],
