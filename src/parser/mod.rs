@@ -28,7 +28,7 @@ impl<'a> super::MetarError<'a> {
     }
 }
 
-pub(crate) fn parse<'a>(data: &'a str) -> Result<super::Metar, super::MetarError> {
+pub(crate) fn parse(data: &'_ str) -> Result<super::Metar, super::MetarError> {
     let res = MetarParser::parse(Rule::metar, data);
     res.map(|mut pairs| {
         let metar_pair = pairs.next().unwrap();
@@ -133,8 +133,8 @@ impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
                     metar.temperature = match temp.as_str() {
                         "//" => Unknown,
                         v => {
-                            if v.starts_with("M") {
-                                Known(- &v[1..].parse::<i32>().unwrap())
+                            if let Some(stripped) = v.strip_prefix('M') {
+                                Known(-stripped.parse::<i32>().unwrap())
                             } else {
                                 Known(v.parse().unwrap())
                             }
@@ -143,8 +143,8 @@ impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
                     metar.dewpoint = match dewp.as_str() {
                         "//" => Unknown,
                         v => {
-                            if v.starts_with("M") {
-                                Known(- &v[1..].parse::<i32>().unwrap())
+                            if let Some(stripped) = v.strip_prefix('M') {
+                                Known(- stripped.parse::<i32>().unwrap())
                             } else {
                                 Known(v.parse().unwrap())
                             }
@@ -157,10 +157,10 @@ impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
                     if data == "////" {
                         break;
                     }
-                    if s.starts_with("Q") {
+                    if s.starts_with('Q') {
                         // QNH
                         metar.pressure = Known(Pressure::Hectopascals(data.parse().unwrap()));
-                    } else if s.starts_with("A") {
+                    } else if s.starts_with('A') {
                         // inHg
                         metar.pressure = Known(Pressure::InchesOfMercury(data.parse::<f32>().unwrap() / 100f32));
                     } else {
@@ -228,7 +228,7 @@ impl<'i> From<Pair<'i, Rule>> for Wind {
                     if s == "//" {
                         break;
                     }
-                    if s.starts_with("P") {
+                    if s.starts_with('P') {
                         s = &s[1..];
                     }
                     speed = Some(s.parse().unwrap());
@@ -253,7 +253,7 @@ impl<'i> From<Pair<'i, Rule>> for Wind {
             wind.speed = Known(unit.clone().unwrap().clone_changing_contents(spd));
         }
         if let Some(gust) = gusting {
-            wind.gusting = unit.clone().map(|u| u.clone_changing_contents(gust));
+            wind.gusting = unit.map(|u| u.clone_changing_contents(gust));
         }
 
         wind
