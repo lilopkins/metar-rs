@@ -108,14 +108,21 @@ impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
                                         metar.visibility =
                                             Known(Visibility::Metres(c.as_str().parse().unwrap()));
                                     }
-                                },
+                                }
                                 Rule::visibility_vertical => {
                                     let data = &c.as_str()[2..];
                                     match data {
-                                        "///" => metar.vert_visibility = Some(VertVisibility::ReducedByUnknownAmount),
-                                        _ => metar.vert_visibility = Some(VertVisibility::Distance(data.parse().unwrap())),
+                                        "///" => {
+                                            metar.vert_visibility =
+                                                Some(VertVisibility::ReducedByUnknownAmount)
+                                        }
+                                        _ => {
+                                            metar.vert_visibility = Some(VertVisibility::Distance(
+                                                data.parse().unwrap(),
+                                            ))
+                                        }
                                     }
-                                },
+                                }
                                 Rule::wx => metar.weather.push(Weather::from(c)),
                                 Rule::cloud => {
                                     metar.clouds = Known(Clouds::CloudLayers);
@@ -138,17 +145,17 @@ impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
                             } else {
                                 Known(v.parse().unwrap())
                             }
-                        },
+                        }
                     };
                     metar.dewpoint = match dewp.as_str() {
                         "//" => Unknown,
                         v => {
                             if let Some(stripped) = v.strip_prefix('M') {
-                                Known(- stripped.parse::<i32>().unwrap())
+                                Known(-stripped.parse::<i32>().unwrap())
                             } else {
                                 Known(v.parse().unwrap())
                             }
-                        },
+                        }
                     };
                 }
                 Rule::pressure => {
@@ -162,7 +169,9 @@ impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
                         metar.pressure = Known(Pressure::Hectopascals(data.parse().unwrap()));
                     } else if s.starts_with('A') {
                         // inHg
-                        metar.pressure = Known(Pressure::InchesOfMercury(data.parse::<f32>().unwrap() / 100f32));
+                        metar.pressure = Known(Pressure::InchesOfMercury(
+                            data.parse::<f32>().unwrap() / 100f32,
+                        ));
                     } else {
                         unreachable!()
                     }
