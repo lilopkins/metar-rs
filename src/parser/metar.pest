@@ -11,7 +11,7 @@ metar = {
     (recents)? ~ 
     (windshear)? ~
     (runway_state)* ~
-    (trend)? ~
+    (trend)* ~
     (remarks)? ~
     "="? ~
     EOI
@@ -81,7 +81,7 @@ atmos_condition = {
     "CAVOK" |
     "SKC" |
     (visibility_horizontal ~
-     ("CLR" |
+     ("CLR" | "NCD" |
       (rvr)* ~
       (wx)* ~
       (visibility_vertical)? ~
@@ -170,7 +170,7 @@ pressure = @{
 }
 
 recents = ${
-    "RE" ~ wx_condition
+    "RE" ~ wx_condition+
 }
 
 windshear = {
@@ -183,8 +183,8 @@ windshear_group = @{
 }
 
 runway_state = {
-    "R" ~ runway_number ~
-    ("CLRD" | "/" ~ runway_deposits ~ runway_contamination ~ runway_deposit_depth) ~
+    "R" ~ runway_number ~ "/" ~
+    ("CLRD" | (runway_deposits ~ runway_contamination ~ runway_deposit_depth)) ~
     runway_braking_action
 }
 
@@ -201,21 +201,24 @@ runway_deposit_depth = @{
 }
 
 runway_braking_action = @{
-    "28" |
-    "38" |
+    (('1'..'8') ~ ASCII_DIGIT) |
     ("9" ~ ('1'..'5' | "9")) |
     "//"
 }
 
-trend = @{
+trend = {
     "NOSIG" |
     "NSW" |
-    "BECMG" ~ wx_change |
-    "TEMPO" ~ wx_change
+    ("BECMG" ~ wx_change_time? ~ wx_change_conditions) |
+    ("TEMPO" ~ wx_change_time? ~ wx_change_conditions)
 }
 
-wx_change = @{
+wx_change_time = @{
     ("FM" | "TL" | "AT") ~ ASCII_DIGIT{4}
+}
+
+wx_change_conditions = {
+    (wind ~ wind_varying?)? ~ visibility_horizontal? ~ wx*
 }
 
 remarks = {

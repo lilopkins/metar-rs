@@ -79,7 +79,7 @@ impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
                     if part.as_str() == "CAVOK" {
                         metar.visibility = Known(Visibility::CAVOK);
                         metar.clouds = Known(Clouds::NoCloudDetected);
-                    } else if part.as_str() == "SKC" {
+                    } else if part.as_str() == "SKC" || part.as_str() == "NCD" {
                         metar.clouds = Known(Clouds::NoCloudDetected);
                     } else {
                         for c in part.into_inner() {
