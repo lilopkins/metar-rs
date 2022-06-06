@@ -1,5 +1,11 @@
 # METAR parsing library for Rust
 
+## Testing
+
+[![metar-rs Automated Testing](https://github.com/lilopkins/metar-rs-autotest/actions/workflows/rust.yml/badge.svg)](https://github.com/lilopkins/metar-rs-autotest/actions/workflows/rust.yml)
+
+This library is being testing regularly with real-world METARs to find failures. The badge above indicates whether these tests are currently successful.
+
 ## Quick usage
 
 This simple usage will print out the parsed data from the METAR.
