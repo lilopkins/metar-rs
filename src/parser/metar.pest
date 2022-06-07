@@ -81,6 +81,7 @@ atmos_condition = {
     "CAVOK" |
     "SKC" |
     (visibility_horizontal ~
+     extra_visibility_horizontal* ~
      ("CLR" | "NCD" |
       (rvr)* ~
       (wx)* ~
@@ -94,6 +95,10 @@ visibility_horizontal = @{
     (ASCII_DIGIT{1,2} ~ "SM") |
     (ASCII_DIGIT ~ " " ~ ASCII_DIGIT ~ "/" ~ ASCII_DIGIT ~ "SM") |
     (ASCII_DIGIT ~ "/" ~ ASCII_DIGIT ~ "SM")
+}
+
+extra_visibility_horizontal = ${
+    visibility_horizontal ~ ("NE" | "NW" | "N" | "SE" | "SW" | "S" | "E" | "W")
 }
 
 visibility_vertical = @{
