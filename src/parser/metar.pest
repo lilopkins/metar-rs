@@ -219,7 +219,7 @@ wx_change_time = @{
 }
 
 wx_change_conditions = {
-    (wind ~ wind_varying?)? ~ visibility_horizontal? ~ wx*
+    (wind ~ wind_varying?)? ~ visibility_horizontal? ~ wx* ~ cloud*
 }
 
 remarks = {
