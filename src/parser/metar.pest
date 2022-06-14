@@ -229,7 +229,7 @@ wx_change_conditions = {
 
 remarks = {
     "RMK " ~
-    (ASCII_ALPHANUMERIC | "$" | "/")*
+    (ASCII_ALPHANUMERIC | "$" | "/" | "-")*
 }
 
 WHITESPACE = _{ " " }
