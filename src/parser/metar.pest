@@ -82,8 +82,8 @@ atmos_condition = {
     "SKC" |
     (visibility_horizontal ~
      extra_visibility_horizontal* ~
+     rvr* ~
      ("CLR" | "NCD" |
-      (rvr)* ~
       (wx)* ~
       (visibility_vertical)? ~
       ("NSC" | (cloud)*)))
