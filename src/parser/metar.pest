@@ -21,7 +21,7 @@ station = @{
     ASCII_ALPHA_UPPER{4}
 }
 
-observation_time = {
+observation_time = ${
     observation_day ~
     observation_hour ~
     observation_minute ~
@@ -83,10 +83,10 @@ atmos_condition = {
     (visibility_horizontal ~
      extra_visibility_horizontal* ~
      rvr* ~
-     ("CLR" | "NCD" |
+     ("CLR" |
       (wx)* ~
       (visibility_vertical)? ~
-      ("NSC" | (cloud)*)))
+      ("NCD" |"NSC" | (cloud)*)))
 }
 
 visibility_horizontal = @{
