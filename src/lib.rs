@@ -86,7 +86,10 @@ impl fmt::Display for MetarError {
 
 impl Metar {
     /// Parse a string into a METAR
-    pub fn parse<S>(data: S) -> Result<Self, MetarError> where S: Into<String> {
+    pub fn parse<S>(data: S) -> Result<Self, MetarError>
+    where
+        S: Into<String>,
+    {
         parser::parse(data.into())
     }
 }
