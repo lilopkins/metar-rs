@@ -1,8 +1,8 @@
-use std::{convert::Infallible};
+use std::convert::Infallible;
 
 use async_trait::async_trait;
 use cucumber::{then, when, WorldInit};
-use metar::{Metar, MetarError, Visibility, Pressure, WindDirection, WindSpeed, Data};
+use metar::{Data, Metar, MetarError, Pressure, Visibility, WindDirection, WindSpeed};
 
 #[derive(Debug, WorldInit)]
 struct World {
@@ -129,7 +129,10 @@ fn check_visibility_metres(w: &mut World, visibility: u16) {
 #[then(expr = "the visibility is {float} mi")]
 fn check_visibility_miles(w: &mut World, visibility: f32) {
     let metar = w.metar();
-    assert_eq!(&Visibility::StatuteMiles(visibility), metar.visibility.unwrap());
+    assert_eq!(
+        &Visibility::StatuteMiles(visibility),
+        metar.visibility.unwrap()
+    );
 }
 
 #[then(expr = "the visibility is CAVOK")]
@@ -177,7 +180,10 @@ fn check_pressure_hpa(w: &mut World, pressure: u16) {
 #[then(expr = "the pressure is {float} inHg")]
 fn check_pressure_inhg(w: &mut World, pressure: f32) {
     let metar = w.metar();
-    assert_eq!(&Pressure::InchesOfMercury(pressure), metar.pressure.unwrap());
+    assert_eq!(
+        &Pressure::InchesOfMercury(pressure),
+        metar.pressure.unwrap()
+    );
 }
 
 #[then(expr = "the pressure is unknown")]
