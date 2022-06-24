@@ -28,9 +28,9 @@ pub use types::*;
 
 #[derive(PartialEq, Clone, Debug)]
 /// A complete METAR
-pub struct Metar<'a> {
+pub struct Metar {
     /// The station making the METAR measurement
-    pub station: &'a str,
+    pub station: String,
     /// The measurement time
     pub time: Time,
     /// The current wind information
@@ -52,14 +52,14 @@ pub struct Metar<'a> {
     /// The current air pressure
     pub pressure: Data<Pressure>,
     /// Remarks added on to the METAR
-    pub remarks: Option<&'a str>,
+    pub remarks: Option<String>,
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 /// An error when parsing a METAR
-pub struct MetarError<'a> {
+pub struct MetarError {
     /// The string being parsed
-    pub string: &'a str,
+    pub string: String,
     /// The start index of the error
     pub start: usize,
     /// The length of the error'd section
@@ -68,9 +68,9 @@ pub struct MetarError<'a> {
     pub variant: pest::error::ErrorVariant<parser::Rule>,
 }
 
-impl<'a> std::error::Error for MetarError<'a> {}
+impl std::error::Error for MetarError {}
 
-impl<'a> fmt::Display for MetarError<'a> {
+impl fmt::Display for MetarError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut caret = String::new();
         for _ in 0..self.start {
@@ -84,9 +84,9 @@ impl<'a> fmt::Display for MetarError<'a> {
     }
 }
 
-impl<'a> Metar<'a> {
+impl Metar {
     /// Parse a string into a METAR
-    pub fn parse(data: &'a str) -> Result<Self, MetarError> {
-        parser::parse(data)
+    pub fn parse<S>(data: S) -> Result<Self, MetarError> where S: Into<String> {
+        parser::parse(data.into())
     }
 }

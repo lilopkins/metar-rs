@@ -9,8 +9,8 @@ use pest_derive::Parser;
 #[grammar = "parser/metar.pest"]
 pub struct MetarParser;
 
-impl<'a> super::MetarError<'a> {
-    fn from_pest_err(e: pest::error::Error<Rule>, data: &'a str) -> Self {
+impl super::MetarError {
+    fn from_pest_err(e: pest::error::Error<Rule>, data: String) -> Self {
         match e.location {
             pest::error::InputLocation::Pos(p) => Self {
                 string: data,
@@ -28,8 +28,8 @@ impl<'a> super::MetarError<'a> {
     }
 }
 
-pub(crate) fn parse(data: &'_ str) -> Result<super::Metar, super::MetarError> {
-    let res = MetarParser::parse(Rule::metar, data);
+pub(crate) fn parse(data: String) -> Result<super::Metar, super::MetarError> {
+    let res = MetarParser::parse(Rule::metar, &data);
     res.map(|mut pairs| {
         let metar_pair = pairs.next().unwrap();
         metar_pair.into()
@@ -37,10 +37,10 @@ pub(crate) fn parse(data: &'_ str) -> Result<super::Metar, super::MetarError> {
     .map_err(|e| super::MetarError::from_pest_err(e, data))
 }
 
-impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
+impl<'i> From<Pair<'i, Rule>> for Metar {
     fn from(pair: Pair<'i, Rule>) -> Self {
         let mut metar = Metar {
-            station: "ZZZZ",
+            station: "ZZZZ".to_owned(),
             time: Time {
                 date: 0,
                 hour: 0,
@@ -66,7 +66,7 @@ impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
         assert_eq!(pair.as_rule(), Rule::metar);
         for part in pair.into_inner() {
             match part.as_rule() {
-                Rule::station => metar.station = part.as_str(),
+                Rule::station => metar.station = part.as_str().to_owned(),
                 Rule::observation_time => metar.time = Time::from(part),
                 Rule::wind => metar.wind = Wind::from(part),
                 Rule::wind_varying => {
@@ -176,7 +176,7 @@ impl<'i> From<Pair<'i, Rule>> for Metar<'i> {
                         unreachable!()
                     }
                 }
-                Rule::remarks => metar.remarks = Some(part.as_str()),
+                Rule::remarks => metar.remarks = Some(part.as_str().to_owned()),
                 _ => (),
             }
         }

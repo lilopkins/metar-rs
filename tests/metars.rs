@@ -341,7 +341,7 @@ fn test_metar_10() {
     assert_eq!(r.temperature, Known(6));
     assert_eq!(r.dewpoint, Known(-3));
     assert_eq!(r.pressure, Known(Pressure::InchesOfMercury(30.29)));
-    assert_eq!(r.remarks, Some("RMK AO2 SLP264 T00611028 $"));
+    assert_eq!(r.remarks, Some("RMK AO2 SLP264 T00611028 $".to_owned()));
 }
 
 #[test]
@@ -379,7 +379,7 @@ fn test_metar_11() {
     assert_eq!(r.temperature, Known(19));
     assert_eq!(r.dewpoint, Known(13));
     assert_eq!(r.pressure, Known(Pressure::InchesOfMercury(30.00)));
-    assert_eq!(r.remarks, Some("RMK AO2 SLP158 T01890133 $"));
+    assert_eq!(r.remarks, Some("RMK AO2 SLP158 T01890133 $".to_owned()));
 }
 
 #[test]
@@ -486,7 +486,7 @@ fn test_metar_14() {
     assert_eq!(r.temperature, Known(16));
     assert_eq!(r.dewpoint, Known(15));
     assert_eq!(r.pressure, Known(Pressure::InchesOfMercury(29.99)));
-    assert_eq!(r.remarks, Some("RMK AO2 VIS 1/8V1/2 T01610150"));
+    assert_eq!(r.remarks, Some("RMK AO2 VIS 1/8V1/2 T01610150".to_owned()));
 }
 
 #[test]
@@ -523,7 +523,7 @@ fn test_metar_15() {
     assert_eq!(r.pressure, Known(Pressure::InchesOfMercury(30.02)));
     assert_eq!(
         r.remarks,
-        Some("RMK AO2 SLP165 T01940139 10194 20156 51006")
+        Some("RMK AO2 SLP165 T01940139 10194 20156 51006".to_owned())
     );
 }
 
@@ -566,7 +566,7 @@ fn test_metar_16() {
     assert_eq!(r.temperature, Known(14));
     assert_eq!(r.dewpoint, Known(12));
     assert_eq!(r.pressure, Known(Pressure::InchesOfMercury(29.96)));
-    assert_eq!(r.remarks, Some("RMK AO2 VIS 1 1/2V3 P0002 T01390122 $"));
+    assert_eq!(r.remarks, Some("RMK AO2 VIS 1 1/2V3 P0002 T01390122 $".to_owned()));
 }
 
 #[test]
