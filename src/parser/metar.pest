@@ -9,7 +9,7 @@ metar = {
     temperatures ~
     pressure ~
     (recents)? ~ 
-    (windshear)? ~
+    (windshear)* ~
     (runway_state)* ~
     (trend)* ~
     (remarks)? ~
@@ -213,10 +213,14 @@ runway_braking_action = @{
 }
 
 trend = {
-    "NOSIG" |
-    "NSW" |
+    wx_significant_conditions |
     ("BECMG" ~ wx_change_time? ~ wx_change_conditions) |
     ("TEMPO" ~ wx_change_time? ~ wx_change_conditions)
+}
+
+wx_significant_conditions = @{
+    "NOSIG" |
+    "NSW"
 }
 
 wx_change_time = @{
@@ -224,7 +228,7 @@ wx_change_time = @{
 }
 
 wx_change_conditions = {
-    (wind ~ wind_varying?)? ~ visibility_horizontal? ~ wx* ~ cloud*
+    wx_significant_conditions? ~ (wind ~ wind_varying?)? ~ visibility_horizontal? ~ wx* ~ cloud*
 }
 
 remarks = {

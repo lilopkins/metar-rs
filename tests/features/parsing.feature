@@ -21,6 +21,7 @@ Feature: METAR Parsing
         #  - cloud layers
         #  - no significant cloud
         #  - vertical visibility
+        #  - windshear
         #  - RVR
 
         Examples:
@@ -54,6 +55,8 @@ Feature: METAR Parsing
             | KLAX    | 13   | 12   | 53     | 80       | 5 kt     | none       | none       | 2 mi       | 18   | 17   | 29.86 inHg | KLAX 131253Z 08005KT 2SM -DZ BR FEW005 OVC008 18/17 A2986 RMK AO2 SLP108 VIS N-NE 1 1/4 VIS S 2 1/2 DZB10 P0000 T01780167 $    |
             | EDDK    | 15   | 08   | 50     | variable | 3 kt     | none       | none       | 9999 m     | 23   | 11   | 1018 hPa   | EDDK 150850Z AUTO VRB03KT 9999 R24/1000U NCD 23/11 Q1018                                                                       |
             | RJAA    | 17   | 15   | 37     | 160      | 2 kt     | none       | none       | 3700 m     | 19   | 19   | 1010 hPa   | RJAA 171537Z AUTO 16002KT 3700 BR NCD 19/19 Q1010 RMK A2984                                                                    |
+            | RJAA    | 24   | 09   | 00     | 220      | 13 kt    | 180 260    | 26 kt      | 9999 m     | 28   | 23   | 1003 hPa   | RJAA 240900Z 22013G26KT 180V260 9999 FEW020 BKN/// 28/23 Q1003 WS R16R WS R16L NOSIG RMK 1CU020 A2962                          |
+            | EDDK    | 24   | 08   | 50     | 240      | 8 kt     | 220 280    | none       | 9000 m     | 18   | 17   | 1008 hPa   | EDDK 240850Z AUTO 24008KT 220V280 9000 SHRA BKN009 FEW///TCU 18/17 Q1008 BECMG NSW SCT015 BKN030                               |
 
     Scenario Outline: Parsing broken METARs fails, but does not panic
         When "<metar>" is parsed
