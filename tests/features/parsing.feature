@@ -57,6 +57,7 @@ Feature: METAR Parsing
             | RJAA    | 17   | 15   | 37     | 160      | 2 kt     | none       | none       | 3700 m     | 19   | 19   | 1010 hPa   | RJAA 171537Z AUTO 16002KT 3700 BR NCD 19/19 Q1010 RMK A2984                                                                    |
             | RJAA    | 24   | 09   | 00     | 220      | 13 kt    | 180 260    | 26 kt      | 9999 m     | 28   | 23   | 1003 hPa   | RJAA 240900Z 22013G26KT 180V260 9999 FEW020 BKN/// 28/23 Q1003 WS R16R WS R16L NOSIG RMK 1CU020 A2962                          |
             | EDDK    | 24   | 08   | 50     | 240      | 8 kt     | 220 280    | none       | 9000 m     | 18   | 17   | 1008 hPa   | EDDK 240850Z AUTO 24008KT 220V280 9000 SHRA BKN009 FEW///TCU 18/17 Q1008 BECMG NSW SCT015 BKN030                               |
+            | UUDD    | 27   | 09   | 00     | 310      | 5 mps    | 260 350    | none       | CAVOK      | 31   | 15   | 1020 hPa   | UUDD 270900Z 31005MPS 260V350 CAVOK 31/15 Q1020 R88/CLRD60 NOSIG                                                               |
 
     Scenario Outline: Parsing broken METARs fails, but does not panic
         When "<metar>" is parsed

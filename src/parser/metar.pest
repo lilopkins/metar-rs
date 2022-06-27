@@ -189,7 +189,7 @@ windshear_group = @{
 }
 
 runway_state = {
-    "R" ~ runway_number ~ "/" ~
+    "R" ~ (runway_number | "88") ~ "/" ~
     ("CLRD" | (runway_deposits ~ runway_contamination ~ runway_deposit_depth)) ~
     runway_braking_action
 }
