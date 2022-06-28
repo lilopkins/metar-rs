@@ -40,6 +40,9 @@ fn parse_successful(w: &mut World) {
     assert!(w.metar.is_some());
 
     let metar_result = w.metar.as_ref().unwrap();
+    if metar_result.is_err() {
+        panic!("{:#?}\n{}", metar_result, metar_result.as_ref().unwrap_err());
+    }
     assert!(metar_result.is_ok());
 }
 

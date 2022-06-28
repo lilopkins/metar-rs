@@ -106,7 +106,7 @@ visibility_vertical = @{
 }
 
 rvr = ${
-    "R" ~ runway_number ~ "/" ~ rvr_visibility ~ rvr_trend?
+    "R" ~ runway_number ~ "/" ~ (rvr_visibility_range | rvr_visibility) ~ "FT"? ~ rvr_trend?
 }
 
 runway_number = @{
@@ -118,11 +118,13 @@ runway_suffix = @{
     "L" | "C" | "R"
 }
 
+rvr_visibility_range = ${
+    rvr_visibility ~ "V" ~ rvr_visibility
+}
+
 rvr_visibility = @{
     ("P" | "M")? ~
-    ASCII_DIGIT{4} ~
-    ("V" ~ ASCII_DIGIT{4})? ~
-    "FT"?
+    ASCII_DIGIT{4}
 }
 
 rvr_trend = @{
