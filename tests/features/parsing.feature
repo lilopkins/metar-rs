@@ -59,6 +59,8 @@ Feature: METAR Parsing
             | EDDK    | 24   | 08   | 50     | 240      | 8 kt     | 220 280    | none       | 9000 m     | 18   | 17   | 1008 hPa   | EDDK 240850Z AUTO 24008KT 220V280 9000 SHRA BKN009 FEW///TCU 18/17 Q1008 BECMG NSW SCT015 BKN030                               |
             | UUDD    | 27   | 09   | 00     | 310      | 5 mps    | 260 350    | none       | CAVOK      | 31   | 15   | 1020 hPa   | UUDD 270900Z 31005MPS 260V350 CAVOK 31/15 Q1020 R88/CLRD60 NOSIG                                                               |
             | KLAX    | 28   | 12   | 53     | 240      | 5 kt     | none       | none       | 0.125 mi   | 17   | 16   | 29.99 inHg | KLAX 281253Z 24005KT 1/8SM R25L/2600VP6000FT FG VV002 17/16 A2999 RMK AO2 SLP152 VIS E 1/4 T01720161                           |
+            | UUDD    | 15   | 12   | 30     | 260      | 7 mps    | none       | none       | CAVOK      | 23   | 09   | 1008 hPa   | UUDD 151230Z 26007MPS CAVOK 23/09 Q1008 WS R32L R32L/CLRD60 NOSIG                                                              |
+            # UUDD 291000Z 12002MPS CAVOK 22/04 Q1022 R88/60D NOSIG
 
     Scenario Outline: Parsing broken METARs fails, but does not panic
         When "<metar>" is parsed
