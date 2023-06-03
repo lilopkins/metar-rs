@@ -236,7 +236,7 @@ wx_change_conditions = {
 }
 
 remarks = {
-    "RMK " ~
+    "RMK" ~
     (ASCII_ALPHANUMERIC | "$" | "/" | "-")*
 }
 
