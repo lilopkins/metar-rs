@@ -1,25 +1,10 @@
-use std::convert::Infallible;
-
-use async_trait::async_trait;
-use cucumber::{then, when, WorldInit};
+use cucumber::{then, when, World as _};
 use metar::{Data, Metar, MetarError, Pressure, Visibility, WindDirection, WindSpeed};
 
-#[derive(Debug, WorldInit)]
+#[derive(cucumber::World, Debug, Default)]
 struct World {
     has_parsed: bool,
     metar: Option<Result<Metar, MetarError>>,
-}
-
-#[async_trait(?Send)]
-impl cucumber::World for World {
-    type Error = Infallible;
-
-    async fn new() -> Result<Self, Self::Error> {
-        Ok(Self {
-            has_parsed: false,
-            metar: None,
-        })
-    }
 }
 
 impl World {
