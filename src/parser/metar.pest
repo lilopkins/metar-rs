@@ -3,12 +3,12 @@ metar = {
     station ~
     observation_time ~
     (method)? ~
-    wind ~
+    (wind)? ~
     (wind_varying)? ~
-    atmos_condition ~
-    temperatures ~
-    pressure ~
-    (recents)? ~ 
+    (atmos_condition)? ~
+    (temperatures)? ~
+    (pressure)? ~
+    (recents)? ~
     (windshear)* ~
     (runway_state)* ~
     (trend)* ~
@@ -80,13 +80,13 @@ wind_varying = ${
 atmos_condition = {
     "CAVOK" |
     "SKC" |
-    (visibility_horizontal ~
+    ((visibility_horizontal)? ~
      restricted_visibility_horizontal* ~
      rvr* ~
-     ("CLR" |
+     ("SKC" | "CLR" |
       (wx)* ~
       (visibility_vertical)? ~
-      ("NCD" |"NSC" | (cloud)*)))
+      ("NCD" | "NSC" | "CLR" | (cloud)*)))
 }
 
 visibility_horizontal = @{
