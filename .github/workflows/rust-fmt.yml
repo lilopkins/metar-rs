@@ -24,7 +24,7 @@ jobs:
 
 
   check-clippy:
-    name: Check formatting
+    name: Check code style (clippy)
     runs-on: ubuntu-latest
 
     steps:
