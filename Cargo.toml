@@ -1,6 +1,6 @@
 [package]
 name = "metar"
-version = "0.7.6"
+version = "0.7.7"
 authors = ["Lily Hopkins <lily@hpkns.uk>"]
 edition = "2021"
 description = "A fast METAR parsing library in pure Rust"
