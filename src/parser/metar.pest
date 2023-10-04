@@ -3,15 +3,16 @@ metar = {
     station ~
     observation_time ~
     (method)? ~
-    wind ~
+    (wind)? ~
     (wind_varying)? ~
-    atmos_condition ~
-    temperatures ~
-    pressure ~
-    (recents)? ~ 
+    (atmos_condition)? ~
+    (temperatures)? ~
+    (pressure)? ~
+    (recents)? ~
     (windshear)* ~
     (runway_state)* ~
     (trend)* ~
+    (cloud_direction)* ~
     (remarks)? ~
     "="? ~
     EOI
@@ -80,13 +81,13 @@ wind_varying = ${
 atmos_condition = {
     "CAVOK" |
     "SKC" |
-    (visibility_horizontal ~
+    ((visibility_horizontal)? ~
      restricted_visibility_horizontal* ~
      rvr* ~
-     ("CLR" |
+     ("SKC" | "CLR" |
       (wx)* ~
       (visibility_vertical)? ~
-      ("NCD" |"NSC" | (cloud)*)))
+      ("NCD" | "NSC" | "CLR" | (cloud)*)))
 }
 
 visibility_horizontal = @{
@@ -97,8 +98,12 @@ visibility_horizontal = @{
     (ASCII_DIGIT ~ "/" ~ ASCII_DIGIT ~ "SM")
 }
 
+compass_direction = _{
+    "NE" | "NW" | "N" | "SE" | "SW" | "S" | "E" | "W"
+}
+
 restricted_visibility_horizontal = ${
-    visibility_horizontal ~ ("NE" | "NW" | "N" | "SE" | "SW" | "S" | "E" | "W")
+    visibility_horizontal ~ compass_direction
 }
 
 visibility_vertical = @{
@@ -233,6 +238,10 @@ wx_change_time = @{
 
 wx_change_conditions = {
     wx_significant_conditions? ~ (wind ~ wind_varying?)? ~ visibility_horizontal? ~ wx* ~ cloud*
+}
+
+cloud_direction = ${
+    cloud_type ~ ("/" ~ compass_direction)+
 }
 
 remarks = {
