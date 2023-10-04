@@ -12,6 +12,7 @@ metar = {
     (windshear)* ~
     (runway_state)* ~
     (trend)* ~
+    (cloud_direction)* ~
     (remarks)? ~
     "="? ~
     EOI
@@ -97,8 +98,12 @@ visibility_horizontal = @{
     (ASCII_DIGIT ~ "/" ~ ASCII_DIGIT ~ "SM")
 }
 
+compass_direction = _{
+    "NE" | "NW" | "N" | "SE" | "SW" | "S" | "E" | "W"
+}
+
 restricted_visibility_horizontal = ${
-    visibility_horizontal ~ ("NE" | "NW" | "N" | "SE" | "SW" | "S" | "E" | "W")
+    visibility_horizontal ~ compass_direction
 }
 
 visibility_vertical = @{
@@ -233,6 +238,10 @@ wx_change_time = @{
 
 wx_change_conditions = {
     wx_significant_conditions? ~ (wind ~ wind_varying?)? ~ visibility_horizontal? ~ wx* ~ cloud*
+}
+
+cloud_direction = ${
+    cloud_type ~ ("/" ~ compass_direction)+
 }
 
 remarks = {
