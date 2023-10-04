@@ -10,13 +10,13 @@ repository = "https://github.com/lilopkins/metar-rs"
 readme = "README.md"
 
 [dependencies]
-pest = "2.1.3"
-pest_derive = "2.1.0"
+pest = "2.7.4"
+pest_derive = "2.7.4"
 
 [dev-dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
-cucumber = "0.19.1"
+cucumber = "0.20.0"
 futures = "0.3"
 
 [[test]]
