@@ -15,7 +15,6 @@ metar = {
     (cloud_direction)* ~
     (remarks)? ~
     "="? ~
-    "\n"? ~
     EOI
 }
 
