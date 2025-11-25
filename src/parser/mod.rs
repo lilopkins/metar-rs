@@ -1,6 +1,6 @@
 use super::types::Data::{Known, Unknown};
 use super::types::{
-    CloudLayer, CloudType, Clouds, Data, Pressure, Time, VertVisibility, Visibility, Weather,
+    CloudLayer, CloudType, Clouds, Data, Pressure, Time, VerticalVisibility, Visibility, Weather,
     WeatherCondition, WeatherIntensity, Wind, WindDirection, WindSpeed,
 };
 use super::Metar;
@@ -126,12 +126,12 @@ impl<'i> From<Pair<'i, Rule>> for Metar {
                                     match data {
                                         "///" => {
                                             metar.vert_visibility =
-                                                Some(VertVisibility::ReducedByUnknownAmount);
+                                                Some(VerticalVisibility::ReducedByUnknownAmount);
                                         }
                                         _ => {
-                                            metar.vert_visibility = Some(VertVisibility::Distance(
-                                                data.parse().unwrap(),
-                                            ));
+                                            metar.vert_visibility = Some(
+                                                VerticalVisibility::Distance(data.parse().unwrap()),
+                                            );
                                         }
                                     }
                                 }

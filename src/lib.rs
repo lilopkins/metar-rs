@@ -44,7 +44,7 @@ pub struct Metar {
     /// The current clouds
     pub cloud_layers: Vec<CloudLayer>,
     /// The current vertical visibility, in feet
-    pub vert_visibility: Option<VertVisibility>,
+    pub vert_visibility: Option<VerticalVisibility>,
     /// The current weather conditions
     pub weather: Vec<Weather>,
     /// The current temperature
@@ -92,7 +92,7 @@ impl fmt::Display for MetarError {
 }
 
 impl Metar {
-    /// Parse a string into a METAR
+    /// Parse a string into a METAR.
     ///
     /// # Errors
     ///
