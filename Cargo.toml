@@ -1,6 +1,6 @@
 [package]
 name = "metar"
-version = "0.7.7"
+version = "0.8.0"
 authors = ["Lily Hopkins <lily@hpkns.uk>"]
 edition = "2021"
 description = "A fast METAR parsing library in pure Rust"
@@ -10,13 +10,13 @@ repository = "https://github.com/lilopkins/metar-rs"
 readme = "README.md"
 
 [dependencies]
-pest = "2.7.4"
-pest_derive = "2.7.4"
+pest = "2.8"
+pest_derive = "2.8"
 
 [dev-dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
-cucumber = "0.20.0"
+cucumber = "0.21"
 futures = "0.3"
 
 [[test]]
