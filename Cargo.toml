@@ -10,6 +10,7 @@ repository = "https://github.com/lilopkins/metar-rs"
 readme = "README.md"
 
 [dependencies]
+annotate-snippets = "0.12.9"
 pest = "2.8"
 pest_derive = "2.8"
 

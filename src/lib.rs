@@ -72,15 +72,23 @@ impl std::error::Error for MetarError {}
 
 impl fmt::Display for MetarError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut caret = String::new();
-        for _ in 0..self.start {
-            caret.push(' ');
-        }
-        caret.push('^');
-        for _ in 1..self.length {
-            caret.push('~');
-        }
-        writeln!(f, "{}\n{}\n{:?}", self.string, caret, self.variant)
+        use annotate_snippets::{renderer::DecorStyle, AnnotationKind, Level, Renderer, Snippet};
+
+        let end = self.start + self.length;
+        let report = &[Level::ERROR
+            .primary_title(self.variant.message())
+            .element(
+                Snippet::source(self.string.clone())
+                    .annotation(
+                        AnnotationKind::Primary
+                            .span(self.start..end)
+                            .label(self.variant.message()),
+                    )
+            )];
+
+        let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
+
+        writeln!(f, "{}", renderer.render(report))
     }
 }
 

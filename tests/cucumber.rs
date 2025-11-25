@@ -85,19 +85,28 @@ fn check_wind_spd_unk(w: &mut World) {
 #[then(expr = "the wind is varying between {int} {int}")]
 fn check_wind_varying(w: &mut World, start: u32, end: u32) {
     let metar = w.metar();
-    assert_eq!((Data::Known(start), Data::Known(end)), metar.wind.varying.unwrap())
+    assert_eq!(
+        (Data::Known(start), Data::Known(end)),
+        metar.wind.varying.unwrap()
+    )
 }
 
 #[then(expr = "the wind is varying between unk {int}")]
 fn check_wind_varying_unknown_start(w: &mut World, end: u32) {
     let metar = w.metar();
-    assert_eq!((Data::Unknown, Data::Known(end)), metar.wind.varying.unwrap())
+    assert_eq!(
+        (Data::Unknown, Data::Known(end)),
+        metar.wind.varying.unwrap()
+    )
 }
 
 #[then(expr = "the wind is varying between {int} unk")]
 fn check_wind_varying_unknown_end(w: &mut World, start: u32) {
     let metar = w.metar();
-    assert_eq!((Data::Known(start), Data::Unknown), metar.wind.varying.unwrap())
+    assert_eq!(
+        (Data::Known(start), Data::Unknown),
+        metar.wind.varying.unwrap()
+    )
 }
 
 #[then(expr = "the wind is varying between unk unk")]

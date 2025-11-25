@@ -267,7 +267,7 @@ impl<'i> From<Pair<'i, Rule>> for Wind {
         }
 
         if let Some(spd) = speed {
-            wind.speed = Known(unit.clone().unwrap().clone_changing_contents(spd));
+            wind.speed = Known(unit.unwrap().clone_changing_contents(spd));
         }
         if let Some(gust) = gusting {
             wind.gusting = unit.map(|u| u.clone_changing_contents(gust));
