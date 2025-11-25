@@ -1,4 +1,4 @@
-#[derive(PartialEq, Eq, Clone, Debug, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
 /// Data that is provided in a metar which might be unknown.
 /// Note that this differs from an `Option<T>` field which is used when data
 /// might not be given at all. In the cases where `Data<T>` is used, data is
@@ -241,7 +241,7 @@ pub struct Wind {
     /// The current wind speed
     pub speed: Data<WindSpeed>,
     /// The direction the wind may be varying between, smaller always comes first
-    pub varying: Option<(u32, u32)>,
+    pub varying: Option<(Data<u32>, Data<u32>)>,
     /// The gusting speed of the wind
     pub gusting: Option<WindSpeed>,
 }

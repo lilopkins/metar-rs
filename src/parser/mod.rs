@@ -71,8 +71,16 @@ impl<'i> From<Pair<'i, Rule>> for Metar {
                 Rule::wind => metar.wind = Wind::from(part),
                 Rule::wind_varying => {
                     let mut hdgs = part.into_inner();
-                    let from = hdgs.next().unwrap().as_str().parse().unwrap();
-                    let to = hdgs.next().unwrap().as_str().parse().unwrap();
+                    let from = hdgs.next().unwrap().as_str();
+                    let from = match from {
+                        "///" => Data::Unknown,
+                        v => Data::Known(v.parse().unwrap()),
+                    };
+                    let to = hdgs.next().unwrap().as_str();
+                    let to = match to {
+                        "///" => Data::Unknown,
+                        v => Data::Known(v.parse().unwrap()),
+                    };
                     metar.wind.varying = Some((from, to));
                 }
                 Rule::atmos_condition => {
