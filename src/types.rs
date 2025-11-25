@@ -40,7 +40,7 @@ pub struct Time {
     pub minute: u8,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
 /// The wind speed
 pub enum WindSpeed {
     /// Winds calm
@@ -64,7 +64,7 @@ impl WindSpeed {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Debug, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
 /// A representation of wind direction
 pub enum WindDirection {
     /// A heading defining wind direction
@@ -75,7 +75,7 @@ pub enum WindDirection {
     Above,
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 /// Horizontal visibility
 pub enum Visibility {
     /// Visibility OK
@@ -86,7 +86,7 @@ pub enum Visibility {
     StatuteMiles(f32),
 }
 
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 /// Measured air pressure
 pub enum Pressure {
     /// Pressure in hectopascals
@@ -95,7 +95,7 @@ pub enum Pressure {
     InchesOfMercury(f32),
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 /// Vertical visibility measurement
 pub enum VertVisibility {
     /// A distance of vertical visibility
@@ -105,7 +105,7 @@ pub enum VertVisibility {
     ReducedByUnknownAmount,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug, Hash)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
 /// Cloud state
 pub enum Clouds {
     /// No cloud was detected, also set for CAVOK
@@ -131,7 +131,7 @@ pub enum CloudLayer {
     Unknown(CloudType, Option<u32>),
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 /// A cloud type description
 pub enum CloudType {
     /// A normal cloud
@@ -153,7 +153,7 @@ pub struct Weather {
     pub conditions: Vec<WeatherCondition>,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 /// Intensity of weather
 pub enum WeatherIntensity {
     /// Light (-)
@@ -168,7 +168,7 @@ pub enum WeatherIntensity {
     Recent,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 /// Descriptor of weather
 pub enum WeatherCondition {
     /// Descriptor - Shallow (MI)
@@ -233,7 +233,7 @@ pub enum WeatherCondition {
     FunnelCloud,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 /// Wind information.
 pub struct Wind {
     /// The wind direction, in degrees
