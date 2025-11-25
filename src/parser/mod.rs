@@ -1,5 +1,8 @@
 use super::types::Data::{Known, Unknown};
-use super::types::{Time, Wind, Clouds, Data, Visibility, VertVisibility, Weather, CloudLayer, Pressure, WindSpeed, WindDirection, WeatherIntensity, WeatherCondition, CloudType};
+use super::types::{
+    CloudLayer, CloudType, Clouds, Data, Pressure, Time, VertVisibility, Visibility, Weather,
+    WeatherCondition, WeatherIntensity, Wind, WindDirection, WindSpeed,
+};
 use super::Metar;
 use pest::iterators::Pair;
 use pest::Parser;
@@ -348,14 +351,12 @@ impl<'i> From<Pair<'i, Rule>> for CloudLayer {
         for part in pair.into_inner() {
             match part.as_rule() {
                 Rule::cloud_density => density = part.as_str(),
-                Rule::cloud_type => {
-                    match part.as_str() {
-                        "///" => typ = CloudType::Unknown,
-                        "CB" => typ = CloudType::Cumulonimbus,
-                        "TCU" => typ = CloudType::ToweringCumulus,
-                        _ => unreachable!(),
-                    }
-                }
+                Rule::cloud_type => match part.as_str() {
+                    "///" => typ = CloudType::Unknown,
+                    "CB" => typ = CloudType::Cumulonimbus,
+                    "TCU" => typ = CloudType::ToweringCumulus,
+                    _ => unreachable!(),
+                },
                 Rule::cloud_floor => match part.as_str() {
                     "///" => floor = None,
                     _ => floor = Some(part.as_str().parse().unwrap()),
