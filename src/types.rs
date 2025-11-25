@@ -12,7 +12,11 @@ pub enum Data<T> {
 }
 
 impl<T> Data<T> {
-    /// Unwraps the inner data type, panics otherwise
+    /// Unwraps the inner data type, panics otherwise.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the data is [`Data::Unknown`].
     pub fn unwrap(&self) -> &T {
         match self {
             Data::Known(v) => v,
@@ -20,7 +24,11 @@ impl<T> Data<T> {
         }
     }
 
-    /// Mutably unwraps the inner data type, panics otherwise
+    /// Mutably unwraps the inner data type, panics otherwise.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the data is [`Data::Unknown`].
     pub fn unwrap_mut(&mut self) -> &mut T {
         match self {
             Data::Known(v) => v,
@@ -54,7 +62,7 @@ pub enum WindSpeed {
 }
 
 impl WindSpeed {
-    pub(crate) fn clone_changing_contents(&self, new_contents: u32) -> Self {
+    pub(crate) fn clone_changing_contents(self, new_contents: u32) -> Self {
         match self {
             WindSpeed::Calm => WindSpeed::Calm,
             WindSpeed::Knot(_) => WindSpeed::Knot(new_contents),

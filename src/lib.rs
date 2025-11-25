@@ -1,4 +1,6 @@
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
+#![deny(clippy::pedantic)]
 
 //! # METAR parsing library for Rust
 //!
@@ -75,16 +77,13 @@ impl fmt::Display for MetarError {
         use annotate_snippets::{renderer::DecorStyle, AnnotationKind, Level, Renderer, Snippet};
 
         let end = self.start + self.length;
-        let report = &[Level::ERROR
-            .primary_title(self.variant.message())
-            .element(
-                Snippet::source(self.string.clone())
-                    .annotation(
-                        AnnotationKind::Primary
-                            .span(self.start..end)
-                            .label(self.variant.message()),
-                    )
-            )];
+        let report = &[Level::ERROR.primary_title(self.variant.message()).element(
+            Snippet::source(self.string.clone()).annotation(
+                AnnotationKind::Primary
+                    .span(self.start..end)
+                    .label(self.variant.message()),
+            ),
+        )];
 
         let renderer = Renderer::styled().decor_style(DecorStyle::Unicode);
 
@@ -94,6 +93,10 @@ impl fmt::Display for MetarError {
 
 impl Metar {
     /// Parse a string into a METAR
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`MetarError`] if parsing failed.
     pub fn parse<S>(data: S) -> Result<Self, MetarError>
     where
         S: Into<String>,

@@ -1,5 +1,5 @@
-use super::types::Data::*;
-use super::types::*;
+use super::types::Data::{Known, Unknown};
+use super::types::{Time, Wind, Clouds, Data, Visibility, VertVisibility, Weather, CloudLayer, Pressure, WindSpeed, WindDirection, WeatherIntensity, WeatherCondition, CloudType};
 use super::Metar;
 use pest::iterators::Pair;
 use pest::Parser;
@@ -38,6 +38,7 @@ pub(crate) fn parse(data: String) -> Result<super::Metar, super::MetarError> {
 }
 
 impl<'i> From<Pair<'i, Rule>> for Metar {
+    #[allow(clippy::too_many_lines, reason = "due a refactor here anyway")]
     fn from(pair: Pair<'i, Rule>) -> Self {
         let mut metar = Metar {
             station: "ZZZZ".to_owned(),
@@ -66,7 +67,7 @@ impl<'i> From<Pair<'i, Rule>> for Metar {
         assert_eq!(pair.as_rule(), Rule::metar);
         for part in pair.into_inner() {
             match part.as_rule() {
-                Rule::station => metar.station = part.as_str().to_owned(),
+                Rule::station => part.as_str().clone_into(&mut metar.station),
                 Rule::observation_time => metar.time = Time::from(part),
                 Rule::wind => metar.wind = Wind::from(part),
                 Rule::wind_varying => {
@@ -94,7 +95,7 @@ impl<'i> From<Pair<'i, Rule>> for Metar {
                             match c.as_rule() {
                                 Rule::visibility_horizontal => {
                                     if c.as_str() == "////" {
-                                        continue;
+                                        // Do nothing
                                     } else if c.as_str().ends_with("SM") {
                                         // Statute miles
                                         let mut total = 0f32;
@@ -122,12 +123,12 @@ impl<'i> From<Pair<'i, Rule>> for Metar {
                                     match data {
                                         "///" => {
                                             metar.vert_visibility =
-                                                Some(VertVisibility::ReducedByUnknownAmount)
+                                                Some(VertVisibility::ReducedByUnknownAmount);
                                         }
                                         _ => {
                                             metar.vert_visibility = Some(VertVisibility::Distance(
                                                 data.parse().unwrap(),
-                                            ))
+                                            ));
                                         }
                                     }
                                 }
@@ -353,7 +354,7 @@ impl<'i> From<Pair<'i, Rule>> for CloudLayer {
                         "CB" => typ = CloudType::Cumulonimbus,
                         "TCU" => typ = CloudType::ToweringCumulus,
                         _ => unreachable!(),
-                    };
+                    }
                 }
                 Rule::cloud_floor => match part.as_str() {
                     "///" => floor = None,
