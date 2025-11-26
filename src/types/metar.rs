@@ -42,7 +42,7 @@ pub struct Metar {
     /// Trends of the weather changing in the near future
     pub trends: Vec<Trend>,
     /// Clouds in the vicinity may be specified separately
-    pub clouds_in_vicinity: Vec<(Vec<CompassDirection>, CloudType)>,
+    pub clouds_in_vicinity: Vec<(Vec<CompassDirection>, Data<CloudType>)>,
     /// Remarks added on to the METAR
     pub remarks: Option<String>,
 }
@@ -165,7 +165,7 @@ impl Parsable for Metar {
         .then(group((
             Trend::parser().separated_by(whitespace).collect::<Vec<_>>(),
             whitespace,
-            <(Vec<CompassDirection>, CloudType) as Parsable>::parser()
+            <(Vec<CompassDirection>, Data<CloudType>) as Parsable>::parser()
                 .separated_by(whitespace_1plus)
                 .collect::<Vec<_>>(),
             whitespace,

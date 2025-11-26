@@ -44,14 +44,11 @@ pub enum CloudDensity {
     Broken,
     /// Overcast cloud cover (7/8)
     Overcast,
-    /// Cloud cover of an unknown density
-    Unknown,
 }
 
 impl Parsable for CloudDensity {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
         choice((
-            just("///").map(|_| CloudDensity::Unknown),
             just("FEW").map(|_| CloudDensity::Few),
             just("SCT").map(|_| CloudDensity::Scattered),
             just("BKN").map(|_| CloudDensity::Broken),
@@ -73,6 +70,14 @@ mod tests {
                 height: Data::Known(300),
                 kind: Data::Known(CloudType::Cumulonimbus),
             }
-        )
+        );
+        assert_eq!(
+            CloudLayer::parse("/////////").unwrap(),
+            CloudLayer {
+                density: Data::Unknown,
+                height: Data::Unknown,
+                kind: Data::Unknown,
+            }
+        );
     }
 }
