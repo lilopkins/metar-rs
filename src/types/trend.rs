@@ -49,17 +49,17 @@ impl Parsable for TrendNewCondition {
 
         group((
             TrendTime::parser()
-                .map(|v| Some(v))
-                .or(empty().map(|_| None)),
+                .map(Some)
+                .or(empty().map(|()| None)),
             whitespace,
-            Wind::parser().map(|v| Some(v)).or(empty().map(|_| None)),
+            Wind::parser().map(Some).or(empty().map(|()| None)),
             whitespace,
             <Data<Visibility> as Parsable>::parser()
                 .try_map(|v, span| match v {
                     Data::Known(v) => Ok(Some(v)),
                     Data::Unknown => Err(ErrorVariant::TrendDataCannotBeUnknown.into_err(span)),
                 })
-                .or(empty().map(|_| None)),
+                .or(empty().map(|()| None)),
             whitespace,
             choice((
                 just("NSW").map(|_| vec![]),
@@ -73,7 +73,7 @@ impl Parsable for TrendNewCondition {
                 .collect::<Vec<_>>(),
         ))
         .map(
-            |(time, _, wind, _, visibility, _, weather, _, cloud)| TrendNewCondition {
+            |(time, (), wind, (), visibility, (), weather, (), cloud)| TrendNewCondition {
                 time,
                 wind,
                 visibility,

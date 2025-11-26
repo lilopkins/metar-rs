@@ -15,7 +15,7 @@ impl WindDirection {
     pub(crate) fn unwrap_heading(self) -> Data<u32> {
         match self {
             Self::Heading(v) => v,
-            _ => panic!(),
+            Self::Variable => panic!(),
         }
     }
 }

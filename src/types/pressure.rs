@@ -25,7 +25,7 @@ impl Parsable for Pressure {
                 .map(|(_, d)| Pressure::Hectopascals(d)),
             just("A")
                 .then(Data::parser_inline(4, four_digits))
-                .map(|(_, d)| Pressure::InchesOfMercury(d.map(|v| (v as f32) / 100.))),
+                .map(|(_, d)| Pressure::InchesOfMercury(d.map(|v| f32::from(v) / 100.))),
         ))
     }
 }

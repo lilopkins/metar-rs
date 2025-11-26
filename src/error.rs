@@ -176,7 +176,7 @@ pub enum ErrorVariant {
     // GENERIC //
     #[display(
         "expected one of: {}; {}",
-        expected.into_iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
+        expected.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
         if let Some(found) = found {
             format!(r#"found "{found}""#)
         } else {
@@ -227,7 +227,7 @@ impl ErrorVariant {
             Self::ExpectedFound { expected, .. } => Cow::Owned(format!(
                 "must be one of {}",
                 expected
-                    .into_iter()
+                    .iter()
                     .map(ToString::to_string)
                     .collect::<Vec<_>>()
                     .join(", ")

@@ -18,7 +18,7 @@ where
     /// # Errors
     ///
     /// Returns a list of errors encountered during parsing.
-    fn parse<'a>(input: &'a str) -> Result<Self, Vec<MetarError<'a>>> {
+    fn parse(input: &str) -> Result<Self, Vec<MetarError<'_>>> {
         Self::parser().parse(input).into_result()
     }
 }

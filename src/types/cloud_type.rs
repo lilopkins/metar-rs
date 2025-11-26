@@ -21,7 +21,7 @@ impl Parsable for CloudType {
             just("TCU").map(|_| CloudType::ToweringCumulus),
             just("CB").map(|_| CloudType::Cumulonimbus),
             just("///").map(|_| CloudType::Unknown),
-            empty().map(|_| CloudType::Normal),
+            empty().map(|()| CloudType::Normal),
         ))
     }
 }

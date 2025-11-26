@@ -18,7 +18,7 @@ impl Parsable for WindshearWarnings {
             WindshearGroup::parser()
                 .separated_by(text::inline_whitespace().at_least(1))
                 .collect::<Vec<_>>()
-                .map(|l| WindshearWarnings::SpecificRunways(l)),
+                .map(WindshearWarnings::SpecificRunways),
         ))
     }
 }
@@ -37,6 +37,6 @@ impl Parsable for WindshearGroup {
             text::inline_whitespace().at_least(1),
             runway_number(),
         ))
-        .map(|(_, _, runway_number)| WindshearGroup { runway_number })
+        .map(|(_, (), runway_number)| WindshearGroup { runway_number })
     }
 }

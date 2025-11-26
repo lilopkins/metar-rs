@@ -88,7 +88,7 @@ impl Parsable for RvrValueInner {
             just("M")
                 .then(rvr_vis)
                 .map(|(_, vis)| RvrValueInner::LessThan(vis)),
-            rvr_vis.map(|vis| RvrValueInner::Exactly(vis)),
+            rvr_vis.map(RvrValueInner::Exactly),
         ))
     }
 }
@@ -106,7 +106,7 @@ impl Parsable for RvrUnit {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
         choice((
             just("FT").map(|_| RvrUnit::Feet),
-            empty().map(|_| RvrUnit::Metres),
+            empty().map(|()| RvrUnit::Metres),
         ))
     }
 }
@@ -127,7 +127,7 @@ impl Parsable for RvrTrend {
         choice((
             just("U").map(|_| RvrTrend::Upwards),
             just("D").map(|_| RvrTrend::Downwards),
-            empty().map(|_| RvrTrend::None),
+            empty().map(|()| RvrTrend::None),
         ))
     }
 }

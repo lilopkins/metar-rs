@@ -33,10 +33,10 @@ impl Parsable for Wind {
                 choice((
                     group((WindDirection::parser(), just("V"), WindDirection::parser()))
                         .map(|(from, _, to)| Some((from.unwrap_heading(), to.unwrap_heading()))),
-                    empty().map(|_| None),
+                    empty().map(|()| None),
                 )),
             ))
-            .map(|(dir, speed, _, varying)| Wind::Present {
+            .map(|(dir, speed, (), varying)| Wind::Present {
                 dir,
                 speed,
                 varying,

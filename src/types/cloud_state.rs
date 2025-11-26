@@ -19,7 +19,7 @@ impl Parsable for Clouds {
             just("NCD").map(|_| Clouds::NoCloudDetected),
             just("NSC").map(|_| Clouds::NoSignificantCloud),
             just("CLR").map(|_| Clouds::NoCloudDetected),
-            empty().map(|_| Clouds::CloudLayers),
+            empty().map(|()| Clouds::CloudLayers),
         ))
     }
 }

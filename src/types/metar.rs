@@ -1,4 +1,4 @@
-use crate::{traits::Parsable, *};
+use crate::{traits::Parsable, Time, Kind, Wind, Data, Visibility, CompassDirection, RunwayVisualRange, Clouds, CloudLayer, VerticalVisibility, Weather, Pressure, WeatherCondition, WindshearWarnings, RunwayCondition, Trend, CloudType, MetarError, WindDirection, WindSpeed};
 use chumsky::prelude::*;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -48,6 +48,7 @@ pub struct Metar {
 }
 
 impl Parsable for Metar {
+    #[allow(clippy::too_many_lines)]
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<MetarError<'src>>> {
         let whitespace = text::inline_whitespace();
         let whitespace_1plus = text::inline_whitespace().at_least(1);
@@ -56,7 +57,7 @@ impl Parsable for Metar {
         let method = choice((
             just("AUTO").map(|_| Kind::Automatic),
             just("COR").map(|_| Kind::Correction),
-            empty().map(|_| Kind::Normal),
+            empty().map(|()| Kind::Normal),
         ));
 
         let temperature = choice((
@@ -83,7 +84,7 @@ impl Parsable for Metar {
             whitespace,
             choice((
                 Wind::parser(),
-                empty().map(|_| Wind::Present {
+                empty().map(|()| Wind::Present {
                     dir: WindDirection::Heading(Data::Unknown),
                     speed: WindSpeed::Knots {
                         speed: Data::Unknown,
@@ -93,7 +94,7 @@ impl Parsable for Metar {
                 }),
             )),
             whitespace,
-            choice((Data::<Visibility>::parser(), empty().map(|_| Data::Unknown))),
+            choice((Data::<Visibility>::parser(), empty().map(|()| Data::Unknown))),
             whitespace,
             <(CompassDirection, Data<Visibility>) as Parsable>::parser()
                 .separated_by(whitespace_1plus)
@@ -115,8 +116,8 @@ impl Parsable for Metar {
                     ),
                     whitespace,
                     VerticalVisibility::parser()
-                        .map(|vv| Some(vv))
-                        .or(empty().map(|_| None)),
+                        .map(Some)
+                        .or(empty().map(|()| None)),
                     whitespace,
                     Clouds::parser(),
                     whitespace,
@@ -124,8 +125,8 @@ impl Parsable for Metar {
                         .separated_by(whitespace_1plus)
                         .collect::<Vec<_>>(),
                 ))
-                .map(|(wx, _, vvis, _, clouds, _, layers)| (wx, vvis, clouds, layers)),
-                empty().map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
+                .map(|(wx, (), vvis, (), clouds, (), layers)| (wx, vvis, clouds, layers)),
+                empty().map(|()| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
             )),
             whitespace,
             group((
@@ -134,9 +135,9 @@ impl Parsable for Metar {
                 Data::parser_inline(2, temperature),
             ))
             .map(|(temp, _, dewp)| (temp, dewp))
-            .or(empty().map(|_| (Data::Unknown, Data::Unknown))),
+            .or(empty().map(|()| (Data::Unknown, Data::Unknown))),
             whitespace,
-            Pressure::parser().or(empty().map(|_| Pressure::Hectopascals(Data::Unknown))),
+            Pressure::parser().or(empty().map(|()| Pressure::Hectopascals(Data::Unknown))),
             whitespace,
             choice((
                 just("RE")
@@ -149,12 +150,12 @@ impl Parsable for Metar {
                     .map(|(_, wx)| wx)
                     .separated_by(whitespace_1plus)
                     .collect::<Vec<_>>(),
-                empty().map(|_| vec![]),
+                empty().map(|()| vec![]),
             )),
             whitespace,
             WindshearWarnings::parser()
-                .map(|v| Some(v))
-                .or(empty().map(|_| None)),
+                .map(Some)
+                .or(empty().map(|()| None)),
             whitespace,
             RunwayCondition::parser()
                 .separated_by(whitespace_1plus)
@@ -171,41 +172,41 @@ impl Parsable for Metar {
             just("RMK")
                 .then(none_of("=").repeated().collect::<String>())
                 .map(|(_, s)| Some(s.trim().to_string()))
-                .or(empty().map(|_| None)),
+                .or(empty().map(|()| None)),
             whitespace,
-            choice((just("=").map(|_| ()), empty().map(|_| ()))),
+            choice((just("=").map(|_| ()), empty().map(|()| ()))),
         )))
         .map(
             |(
                 (
                     station,
-                    _,
+                    (),
                     time,
-                    _,
+                    (),
                     kind,
-                    _,
+                    (),
                     wind,
-                    _,
+                    (),
                     visibility,
-                    _,
+                    (),
                     reduced_directional_visibility,
-                    _,
+                    (),
                     rvr,
-                    _,
+                    (),
                     (weather, vert_visibility, clouds, cloud_layers),
-                    _,
+                    (),
                     (temperature, dewpoint),
-                    _,
+                    (),
                     pressure,
-                    _,
+                    (),
                     recent_weather,
-                    _,
+                    (),
                     windshear_warnings,
-                    _,
+                    (),
                     runway_conditions,
-                    _,
+                    (),
                 ),
-                (trends, _, clouds_in_vicinity, _, remarks, _, _),
+                (trends, (), clouds_in_vicinity, (), remarks, (), ()),
             )| {
                 Metar {
                     station: station.to_string(),
@@ -224,8 +225,8 @@ impl Parsable for Metar {
                     pressure,
                     recent_weather: recent_weather
                         .iter()
-                        .flat_map(|v| v)
-                        .cloned()
+                        .flatten()
+                        .copied()
                         .collect::<Vec<_>>(),
                     windshear_warnings,
                     runway_conditions,
@@ -244,7 +245,7 @@ impl Metar {
     /// # Errors
     ///
     /// Returns a [`MetarError`] if parsing failed.
-    pub fn parse<'a>(data: &'a str) -> Result<Self, Vec<MetarError<'a>>> {
+    pub fn parse(data: &str) -> Result<Self, Vec<MetarError<'_>>> {
         <Metar as Parsable>::parse(data).map_err(|v| {
             v.into_iter()
                 .map(|mut e| {

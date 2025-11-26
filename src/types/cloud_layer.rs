@@ -7,15 +7,15 @@ use super::CloudType;
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 /// Cloud cover
 pub struct CloudLayer {
-    density: CloudDensity,
-    kind: CloudType,
+    density: Data<CloudDensity>,
+    kind: Data<CloudType>,
     height: Data<u32>,
 }
 
 impl Parsable for CloudLayer {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
         group((
-            CloudDensity::parser(),
+            Data::parser_inline(3, CloudDensity::parser()),
             Data::parser_inline(
                 3,
                 text::digits(10)
@@ -23,7 +23,7 @@ impl Parsable for CloudLayer {
                     .to_slice()
                     .map(|d: &str| d.parse().unwrap()),
             ),
-            CloudType::parser(),
+            Data::parser_inline(3, CloudType::parser()),
         ))
         .map(|(density, height, kind)| CloudLayer {
             density,
@@ -69,9 +69,9 @@ mod tests {
         assert_eq!(
             CloudLayer::parse("BKN300CB").unwrap(),
             CloudLayer {
-                density: CloudDensity::Broken,
+                density: Data::Known(CloudDensity::Broken),
                 height: Data::Known(300),
-                kind: CloudType::Cumulonimbus,
+                kind: Data::Known(CloudType::Cumulonimbus),
             }
         )
     }

@@ -49,7 +49,7 @@ impl Parsable for WindSpeed {
                     just("G")
                         .then(text::digits(10).exactly(2).to_slice())
                         .map(|(_, gust): (&str, &str)| Some(Data::Known(gust.parse().unwrap()))),
-                    empty().map(|_| None),
+                    empty().map(|()| None),
                 )),
                 just("KT"),
             ))
@@ -71,7 +71,7 @@ impl Parsable for WindSpeed {
                     just("G")
                         .then(text::digits(10).exactly(2).to_slice())
                         .map(|(_, gust): (&str, &str)| Some(Data::Known(gust.parse().unwrap()))),
-                    empty().map(|_| None),
+                    empty().map(|()| None),
                 )),
                 just("MPS"),
             ))
@@ -93,7 +93,7 @@ impl Parsable for WindSpeed {
                     just("G")
                         .then(text::digits(10).exactly(3).to_slice())
                         .map(|(_, gust): (&str, &str)| Some(Data::Known(gust.parse().unwrap()))),
-                    empty().map(|_| None),
+                    empty().map(|()| None),
                 )),
                 just("KPH"),
             ))

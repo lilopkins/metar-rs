@@ -24,7 +24,7 @@ impl Parsable for WeatherIntensity {
             just("+").map(|_| WeatherIntensity::Heavy),
             just("VC").map(|_| WeatherIntensity::InVicinity),
             just("RE").map(|_| WeatherIntensity::Recent),
-            empty().map(|_| WeatherIntensity::Moderate),
+            empty().map(|()| WeatherIntensity::Moderate),
         ))
     }
 }

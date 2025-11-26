@@ -20,7 +20,7 @@ pub(crate) fn runway_number<'src>(
             just("L").map(|_| "L"),
             just("C").map(|_| "C"),
             just("R").map(|_| "R"),
-            empty().map(|_| ""),
+            empty().map(|()| ""),
         )),
     ))
     .map(|(_, rwy, suffix)| format!("{rwy}{suffix}"))
