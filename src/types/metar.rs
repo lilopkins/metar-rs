@@ -26,7 +26,7 @@ pub struct Metar {
     /// The current vertical visibility, in feet
     pub vert_visibility: Option<VerticalVisibility>,
     /// The current weather conditions
-    pub weather: Vec<Weather>,
+    pub weather: Data<Vec<Weather>>,
     /// The current temperature
     pub temperature: Data<i32>,
     /// The current dewpoint
@@ -104,12 +104,12 @@ impl Parsable for Metar {
                 .collect::<Vec<_>>(),
             whitespace,
             choice((
-                just("SKC").map(|_| (vec![], None, Clouds::NoCloudDetected, vec![])),
-                just("CLR").map(|_| (vec![], None, Clouds::NoCloudDetected, vec![])),
+                just("SKC").map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
+                just("CLR").map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
                 group((
-                    Weather::parser()
-                        .separated_by(whitespace_1plus)
-                        .collect::<Vec<_>>(),
+                    Data::parser_inline(2, Weather::parser()
+                            .separated_by(whitespace_1plus)
+                            .collect::<Vec<_>>()),
                     whitespace,
                     VerticalVisibility::parser()
                         .map(|vv| Some(vv))
@@ -122,7 +122,7 @@ impl Parsable for Metar {
                         .collect::<Vec<_>>(),
                 ))
                 .map(|(wx, _, vvis, _, clouds, _, layers)| (wx, vvis, clouds, layers)),
-                empty().map(|_| (vec![], None, Clouds::NoCloudDetected, vec![])),
+                empty().map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
             )),
             whitespace,
             group((

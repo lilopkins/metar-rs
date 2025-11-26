@@ -56,17 +56,6 @@ impl<T> Data<T> {
     }
 }
 
-// impl<T: Parsable> Data<T> {
-//     /// Generate a parser for this Data<T>
-//     pub(crate) fn parser<'src>(num_slashes: usize) -> impl Parser<'src, &'src str, Data<T>> {
-//         let slashes = just("/").repeated().exactly(num_slashes);
-//         choice((
-//             slashes.map(|_| Data::Unknown),
-//             T::parser().map(|v| Data::Known(v)),
-//         ))
-//     }
-// }
-
 impl<T> Data<T> {
     /// Generate a parser for this Data<T>, with a given parser to get `T`.
     pub(crate) fn parser_inline<'src>(
