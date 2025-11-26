@@ -1,3 +1,7 @@
+use chumsky::prelude::*;
+
+use crate::traits::Parsable;
+
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 /// Intensity of weather
 pub enum WeatherIntensity {
@@ -11,4 +15,16 @@ pub enum WeatherIntensity {
     InVicinity,
     /// Recent (RE)
     Recent,
+}
+
+impl Parsable for WeatherIntensity {
+    fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
+        choice((
+            just("-").map(|_| WeatherIntensity::Light),
+            just("+").map(|_| WeatherIntensity::Heavy),
+            just("VC").map(|_| WeatherIntensity::InVicinity),
+            just("RE").map(|_| WeatherIntensity::Recent),
+            empty().map(|_| WeatherIntensity::Moderate),
+        ))
+    }
 }

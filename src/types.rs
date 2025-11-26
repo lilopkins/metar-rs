@@ -1,5 +1,8 @@
+mod metar;
+pub use metar::Metar;
+
 mod cloud_layer;
-pub use cloud_layer::CloudLayer;
+pub use cloud_layer::{CloudDensity, CloudLayer};
 
 mod cloud_state;
 pub use cloud_state::Clouds;
@@ -10,14 +13,26 @@ pub use cloud_type::CloudType;
 mod data;
 pub use data::Data;
 
+mod kind;
+pub use kind::Kind;
+
 mod pressure;
 pub use pressure::Pressure;
+
+mod runway_condition;
+pub use runway_condition::RunwayCondition;
+
+mod rvr;
+pub use rvr::{RunwayVisualRange, RvrTrend, RvrUnit, RvrValue, RvrValueInner};
 
 mod time;
 pub use time::Time;
 
+mod trend;
+pub use trend::{Trend, TrendNewCondition, TrendTime};
+
 mod visibility;
-pub use visibility::Visibility;
+pub use visibility::{CompassDirection, Visibility};
 
 mod vertical_visibility;
 pub use vertical_visibility::VerticalVisibility;
@@ -39,3 +54,6 @@ pub use wind_direction::WindDirection;
 
 mod wind_speed;
 pub use wind_speed::WindSpeed;
+
+mod windshear_warnings;
+pub use windshear_warnings::{WindshearGroup, WindshearWarnings};

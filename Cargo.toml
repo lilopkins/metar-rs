@@ -11,8 +11,8 @@ readme = "README.md"
 
 [dependencies]
 annotate-snippets = "0.12.9"
-pest = "2.8"
-pest_derive = "2.8"
+chumsky = { version = "0.11.2", features = ["regex"] }
+derive_more = { version = "2.0.1", features = ["display"] }
 
 [dev-dependencies]
 anyhow = "1.0"

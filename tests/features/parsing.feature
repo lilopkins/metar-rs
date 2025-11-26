@@ -17,12 +17,18 @@ Feature: METAR Parsing
         And the pressure is <pressure>
 
         # Currently missing checks for:
-        #  - weather
-        #  - cloud layers
-        #  - no significant cloud
-        #  - vertical visibility
-        #  - windshear
+        #  - kind of report
+        #  - reduced direcitonal visibility
         #  - RVR
+        #  - cloud situation and cloud layers
+        #  - vertical visibility
+        #  - weather
+        #  - recent weather
+        #  - windshear warnings
+        #  - runway conditions
+        #  - trends
+        #  - clouds in the vicinity
+        #  - remarks
 
         Examples:
             | station | date | hour | minute | wind_dir | wind_spd | wind_vryng | wind_gusts | visibility | temp | dewp | pressure   | metar                                                                                                                          |
@@ -75,7 +81,7 @@ Feature: METAR Parsing
             | HRYR    | 22   | 05   | 30     | unknown  | unknown  | unk unk    | none       | 5000 m     | 18   | 17   | 1022 hPa   | HRYR 220530Z /////KT ///V/// 5000 SCT005 BKN015 18/17 Q1022 NOSIG                                                              |
             #| UUDD    | 25   | 08   | 30     | 030      | 4 mps    | 350 150    | none       | CAVOK      | 25   | 11   | 1019 hPa   | UUDD 250830Z 03004MPS 350V150 CAVOK 25/11 Q1019 R88/60D NOSIG                                                                  |
             #| EDDK    | 07   | 13   | 50     | 250      | 4 kt     | 220 280    | none       | 9999 m     | 17   | 14   | 1013 hPa   | EDDK 071350Z AUTO 25004KT 220V280 9999 3100 SHRA BKN036 BKN046 SCT///TCU 17/14 Q1013 BECMG NSW                                 |
-            # | UUDD    | 29   | 10   | 00     | 120      | 2 mps    | none       | none       | CAVOK      | 22   | 4    | 1022 hPa   | UUDD 291000Z 12002MPS CAVOK 22/04 Q1022 R88/60D NOSIG                                                                          |
+            #| UUDD    | 29   | 10   | 00     | 120      | 2 mps    | none       | none       | CAVOK      | 22   | 4    | 1022 hPa   | UUDD 291000Z 12002MPS CAVOK 22/04 Q1022 R88/60D NOSIG                                                                          |
 
     Scenario Outline: Parsing broken METARs fails, but does not panic
         When "<metar>" is parsed
