@@ -107,9 +107,12 @@ impl Parsable for Metar {
                 just("SKC").map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
                 just("CLR").map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
                 group((
-                    Data::parser_inline(2, Weather::parser()
+                    Data::parser_inline(
+                        2,
+                        Weather::parser()
                             .separated_by(whitespace_1plus)
-                            .collect::<Vec<_>>()),
+                            .collect::<Vec<_>>(),
+                    ),
                     whitespace,
                     VerticalVisibility::parser()
                         .map(|vv| Some(vv))
@@ -159,9 +162,7 @@ impl Parsable for Metar {
             whitespace,
         ))
         .then(group((
-            Trend::parser()
-                .separated_by(whitespace)
-                .collect::<Vec<_>>(),
+            Trend::parser().separated_by(whitespace).collect::<Vec<_>>(),
             whitespace,
             <(Vec<CompassDirection>, CloudType) as Parsable>::parser()
                 .separated_by(whitespace_1plus)
