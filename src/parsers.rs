@@ -2,6 +2,7 @@ use chumsky::prelude::*;
 
 use crate::ErrorVariant;
 
+/// Parse a runway number
 pub(crate) fn runway_number<'src>(
 ) -> impl Parser<'src, &'src str, String, extra::Err<crate::MetarError<'src>>> {
     group((
@@ -26,12 +27,14 @@ pub(crate) fn runway_number<'src>(
     .map(|(_, rwy, suffix)| format!("{rwy}{suffix}"))
 }
 
-pub(crate) fn whitespace<'src>(
+/// Match and parse any whitespace, including none
+pub(crate) fn any_whitespace<'src>(
 ) -> impl Parser<'src, &'src str, (), extra::Err<crate::MetarError<'src>>> {
     text::inline_whitespace().or(end())
 }
 
-pub(crate) fn whitespace_1plus<'src>(
+/// Match and parse some whitespace, demanding at least one character of whitespace
+pub(crate) fn some_whitespace<'src>(
 ) -> impl Parser<'src, &'src str, (), extra::Err<crate::MetarError<'src>>> {
     text::inline_whitespace().at_least(1).or(end())
 }

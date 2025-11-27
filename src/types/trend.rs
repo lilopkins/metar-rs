@@ -1,7 +1,7 @@
 use chumsky::prelude::*;
 
 use crate::{
-    parsers::whitespace_1plus, traits::Parsable, CloudLayer, Visibility,
+    parsers::some_whitespace, traits::Parsable, CloudLayer, Visibility,
     Weather, Wind,
 };
 
@@ -50,21 +50,21 @@ impl Parsable for TrendNewCondition {
         group((
             TrendTime::parser()
                 .map(Some)
-                .then_ignore(whitespace_1plus())
+                .then_ignore(some_whitespace())
                 .or(empty().map(|()| None)),
             Wind::parser().map(Some).or(empty().map(|()| None)),
             Visibility::parser()
                 .map(|v| Some(v))
-                .then_ignore(whitespace_1plus())
+                .then_ignore(some_whitespace())
                 .or(empty().map(|()| None)),
             choice((
-                just("NSW").map(|_| vec![]).then_ignore(whitespace_1plus()),
+                just("NSW").map(|_| vec![]).then_ignore(some_whitespace()),
                 Weather::parser()
-                    .separated_by(whitespace_1plus())
+                    .separated_by(some_whitespace())
                     .collect::<Vec<_>>(),
             )),
             CloudLayer::parser()
-                .separated_by(whitespace_1plus())
+                .separated_by(some_whitespace())
                 .collect::<Vec<_>>(),
         ))
         .map(

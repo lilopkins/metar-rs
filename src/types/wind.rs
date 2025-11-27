@@ -1,6 +1,6 @@
 use chumsky::prelude::*;
 
-use crate::parsers::whitespace_1plus;
+use crate::parsers::some_whitespace;
 use crate::traits::Parsable;
 
 use super::Data;
@@ -28,14 +28,14 @@ impl Parsable for Wind {
         choice((
             just("CALM")
                 .map(|_| Wind::Calm)
-                .then_ignore(whitespace_1plus()),
+                .then_ignore(some_whitespace()),
             group((
                 WindDirection::parser(),
-                WindSpeed::parser().then_ignore(whitespace_1plus()),
+                WindSpeed::parser().then_ignore(some_whitespace()),
                 choice((
                     group((WindDirection::parser(), just("V"), WindDirection::parser()))
                         .map(|(from, _, to)| Some((from.unwrap_heading(), to.unwrap_heading())))
-                        .then_ignore(whitespace_1plus()),
+                        .then_ignore(some_whitespace()),
                     empty().map(|()| None),
                 )),
             ))

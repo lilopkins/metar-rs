@@ -1,7 +1,7 @@
 use chumsky::prelude::*;
 
 use crate::{
-    parsers::{runway_number, whitespace_1plus},
+    parsers::{runway_number, some_whitespace},
     traits::Parsable,
 };
 
@@ -19,7 +19,7 @@ impl Parsable for WindshearWarnings {
         choice((
             just("WS ALL RWY").map(|_| WindshearWarnings::AllRunways),
             WindshearGroup::parser()
-                .separated_by(whitespace_1plus())
+                .separated_by(some_whitespace())
                 .collect::<Vec<_>>()
                 .map(WindshearWarnings::SpecificRunways),
         ))

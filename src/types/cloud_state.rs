@@ -1,6 +1,6 @@
 use chumsky::prelude::*;
 
-use crate::{parsers::whitespace_1plus, traits::Parsable};
+use crate::{parsers::some_whitespace, traits::Parsable};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
 /// Cloud state
@@ -18,13 +18,13 @@ impl Parsable for Clouds {
         choice((
             just("NCD")
                 .map(|_| Clouds::NoCloudDetected)
-                .then_ignore(whitespace_1plus()),
+                .then_ignore(some_whitespace()),
             just("NSC")
                 .map(|_| Clouds::NoSignificantCloud)
-                .then_ignore(whitespace_1plus()),
+                .then_ignore(some_whitespace()),
             just("CLR")
                 .map(|_| Clouds::NoCloudDetected)
-                .then_ignore(whitespace_1plus()),
+                .then_ignore(some_whitespace()),
             empty().map(|()| Clouds::CloudLayers),
         ))
     }
