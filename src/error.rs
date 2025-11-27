@@ -36,6 +36,7 @@ impl<'a> chumsky::error::Error<'a, &'a str> for MetarError<'a> {
                     expected.push(item.clone());
                 }
             }
+            expected.sort();
         }
         self
     }
@@ -158,7 +159,7 @@ impl MetarError<'_> {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Debug, Display)]
+#[derive(PartialEq, Eq, Clone, Debug, Display, PartialOrd, Ord)]
 pub enum ExpectedNext {
     #[display("\"{value}\"")]
     Literal { value: String },
