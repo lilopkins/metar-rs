@@ -15,8 +15,14 @@ use metar::Metar;
 
 fn main() {
   let metar = "EGHI 282120Z 19015KT 140V220 6000 RA SCT006 BKN009 16/14 Q1006";
-  let r = Metar::parse(metar).unwrap();
-  println!("{:#?}", r);
+  match Metar::parse(metar) {
+    Ok(metar) => println!("{metar:#?}"),
+    Err(es) => {
+      for e in es {
+        eprintln!("{e}");
+      }
+    }
+  }
 }
 ```
 
