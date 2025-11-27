@@ -98,7 +98,7 @@ impl Parsable for Metar {
                 }),
             )),
             choice((
-                Data::<Visibility>::parser().then_ignore(whitespace_1plus()),
+                Data::parser_inline(4, Visibility::parser()).then_ignore(whitespace_1plus()),
                 empty().map(|()| Data::Unknown),
             )),
             <(CompassDirection, Data<Visibility>) as Parsable>::parser()

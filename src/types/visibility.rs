@@ -46,27 +46,26 @@ pub enum Visibility {
     StatuteMiles(f32),
 }
 
-impl Parsable for Data<Visibility> {
+impl Parsable for Visibility {
     fn parser<'src>(
     ) -> impl chumsky::Parser<'src, &'src str, Self, chumsky::extra::Err<crate::MetarError<'src>>>
     {
         choice((
-            just("////").map(|_| Data::Unknown),
-            just("CAVOK").map(|_| Data::Known(Visibility::CAVOK)),
+            just("CAVOK").map(|_| Visibility::CAVOK),
             // To compensate for a technically incorrect placement:
-            just("SKC").map(|_| Data::Known(Visibility::CAVOK)),
+            just("SKC").map(|_| Visibility::CAVOK),
             // Metres
             text::digits(10)
                 .exactly(4)
                 .to_slice()
-                .map(|digits: &str| Data::Known(Visibility::Metres(digits.parse().unwrap()))),
+                .map(|digits: &str| Visibility::Metres(digits.parse().unwrap())),
             // Whole miles
             text::digits(10)
                 .at_least(1)
                 .at_most(2)
                 .to_slice()
                 .then_ignore(just("SM"))
-                .map(|digits: &str| Data::Known(Visibility::StatuteMiles(digits.parse().unwrap()))),
+                .map(|digits: &str| Visibility::StatuteMiles(digits.parse().unwrap())),
             // Fractional miles
             group((
                 text::digits(10).exactly(1).to_slice(),
@@ -77,7 +76,7 @@ impl Parsable for Data<Visibility> {
             .map(|(numerator, _, denominator, _): (&str, &str, &str, &str)| {
                 let numerator: f32 = numerator.parse().unwrap();
                 let denominator: f32 = denominator.parse().unwrap();
-                Data::Known(Visibility::StatuteMiles(numerator / denominator))
+                Visibility::StatuteMiles(numerator / denominator)
             }),
             // Whole and fractional miles
             group((
@@ -100,9 +99,9 @@ impl Parsable for Data<Visibility> {
                     let whole_part: f32 = whole_part.parse().unwrap();
                     let numerator: f32 = numerator.parse().unwrap();
                     let denominator: f32 = denominator.parse().unwrap();
-                    Data::Known(Visibility::StatuteMiles(
+                    Visibility::StatuteMiles(
                         whole_part + numerator / denominator,
-                    ))
+                    )
                 },
             ),
         ))
@@ -112,7 +111,7 @@ impl Parsable for Data<Visibility> {
 impl Parsable for (CompassDirection, Data<Visibility>) {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
         group((
-            Data::<Visibility>::parser().then_ignore(whitespace()),
+            Data::parser_inline(4, Visibility::parser()).then_ignore(whitespace()),
             CompassDirection::parser(),
         ))
         .map(|(vis, dir)| (dir, vis))
@@ -126,24 +125,24 @@ mod tests {
     #[test]
     fn valid_visibility() {
         assert_eq!(
-            Data::<Visibility>::parse("CAVOK").unwrap(),
-            Data::Known(Visibility::CAVOK)
+            Visibility::parse("CAVOK").unwrap(),
+            Visibility::CAVOK
         );
         assert_eq!(
-            Data::<Visibility>::parse("5000").unwrap(),
-            Data::Known(Visibility::Metres(5000))
+            Visibility::parse("5000").unwrap(),
+            Visibility::Metres(5000)
         );
         assert_eq!(
-            Data::<Visibility>::parse("3SM").unwrap(),
-            Data::Known(Visibility::StatuteMiles(3.))
+            Visibility::parse("3SM").unwrap(),
+            Visibility::StatuteMiles(3.)
         );
         assert_eq!(
-            Data::<Visibility>::parse("1/4SM").unwrap(),
-            Data::Known(Visibility::StatuteMiles(0.25))
+            Visibility::parse("1/4SM").unwrap(),
+            Visibility::StatuteMiles(0.25)
         );
         assert_eq!(
-            Data::<Visibility>::parse("3 1/2SM").unwrap(),
-            Data::Known(Visibility::StatuteMiles(3.5))
+            Visibility::parse("3 1/2SM").unwrap(),
+            Visibility::StatuteMiles(3.5)
         );
     }
 }

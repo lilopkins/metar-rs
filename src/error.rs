@@ -206,10 +206,6 @@ pub enum ErrorVariant {
     InvalidRvrRunwayNumber,
     #[display("invalid distance in RVR")]
     InvalidRvrDistance,
-
-    // TREND //
-    #[display("data in a trend must be known ahead of time")]
-    TrendDataCannotBeUnknown,
 }
 
 impl ErrorVariant {
@@ -255,11 +251,6 @@ impl ErrorVariant {
                 r#"the runway number must be between 00 and 36, and may be suffixed with "L", "C" or "R""#,
             ),
             Self::InvalidRvrDistance => Cow::Borrowed("the RVR distance must be a 4 digit number"),
-
-            // TREND //
-            Self::TrendDataCannotBeUnknown => Cow::Borrowed(
-                "trend data cannot be unknown as it isn't reported as a trend if it's unknown!",
-            ),
         }
     }
 }
