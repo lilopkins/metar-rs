@@ -1,9 +1,9 @@
 use crate::{
-    parsers::{any_whitespace, some_whitespace},
+    parsers::{any_whitespace, some_whitespace, temperature},
     traits::Parsable,
-    CloudLayer, CloudType, Clouds, CompassDirection, Data, Kind, MetarError, Pressure,
-    RunwayCondition, RunwayVisualRange, Time, Trend, VerticalVisibility, Visibility, Weather,
-    WeatherCondition, Wind, WindDirection, WindSpeed, WindshearWarnings,
+    CloudLayer, CloudType, Clouds, ColourCode, CompassDirection, Data, Kind, MetarError, Pressure,
+    RunwayCondition, RunwayVisualRange, SeaCondition, Time, Trend, VerticalVisibility, Visibility,
+    Weather, WeatherCondition, Wind, WindDirection, WindSpeed, WindshearWarnings,
 };
 use chumsky::prelude::*;
 
@@ -21,8 +21,9 @@ pub struct Metar {
     /// The current visibility
     pub visibility: Data<Visibility>,
     /// If the visibility is reduced further in a specific direction,
-    /// that will be covered here.
-    pub reduced_directional_visibility: Vec<(CompassDirection, Data<Visibility>)>,
+    /// that will be covered here. If the direction is [`None`], it is
+    /// reduced in a nonspecific direction.
+    pub reduced_directional_visibility: Vec<(Option<CompassDirection>, Data<Visibility>)>,
     /// Specific visual ranges for runways
     pub rvr: Vec<RunwayVisualRange>,
     /// The current clouds
@@ -39,10 +40,14 @@ pub struct Metar {
     pub dewpoint: Data<i32>,
     /// The current air pressure
     pub pressure: Pressure,
+    /// Military airport colour code
+    pub colour_code: Option<ColourCode>,
     /// Additional recent weather conditions
-    pub recent_weather: Vec<WeatherCondition>,
+    pub recent_weather: Vec<Data<Vec<WeatherCondition>>>,
     /// Windshear warnings
     pub windshear_warnings: Option<WindshearWarnings>,
+    /// Sea surface condition
+    pub sea_condition: Option<SeaCondition>,
     /// The condition of runways
     pub runway_conditions: Vec<RunwayCondition>,
     /// Trends of the weather changing in the near future
@@ -64,25 +69,17 @@ impl Parsable for Metar {
             just("COR")
                 .map(|_| Kind::Correction)
                 .then_ignore(some_whitespace()),
+            just("CCA")
+                .map(|_| Kind::Correction)
+                .then_ignore(some_whitespace()),
             empty().map(|()| Kind::Normal),
         ));
 
-        let temperature = choice((
-            just("M")
-                .then(
-                    text::digits(10)
-                        .exactly(2)
-                        .to_slice()
-                        .map(|d: &str| d.parse::<i32>().unwrap()),
-                )
-                .map(|(_, v)| -v),
-            text::digits(10)
-                .exactly(2)
-                .to_slice()
-                .map(|d: &str| d.parse().unwrap()),
-        ));
-
         group((
+            just("METAR")
+                .then_ignore(some_whitespace())
+                .map(|_| ())
+                .or(empty()),
             station.then_ignore(some_whitespace()),
             Time::parser().then_ignore(some_whitespace()),
             method,
@@ -101,7 +98,7 @@ impl Parsable for Metar {
                 Data::parser_inline(4, Visibility::parser()).then_ignore(some_whitespace()),
                 empty().map(|()| Data::Unknown),
             )),
-            <(CompassDirection, Data<Visibility>) as Parsable>::parser()
+            <(Option<CompassDirection>, Data<Visibility>) as Parsable>::parser()
                 .separated_by(some_whitespace())
                 .allow_trailing()
                 .collect::<Vec<_>>(),
@@ -139,9 +136,9 @@ impl Parsable for Metar {
                 empty().map(|()| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
             )),
             group((
-                Data::parser_inline(2, temperature),
+                Data::parser_inline(2, temperature()),
                 just("/"),
-                Data::parser_inline(2, temperature),
+                Data::parser_inline(2, temperature()).or(empty().map(|()| Data::Unknown)),
             ))
             .map(|(temp, _, dewp)| (temp, dewp))
             .then_ignore(some_whitespace())
@@ -149,14 +146,19 @@ impl Parsable for Metar {
             Pressure::parser()
                 .then_ignore(some_whitespace())
                 .or(empty().map(|()| Pressure::Hectopascals(Data::Unknown))),
+            ColourCode::parser()
+                .map(Some)
+                .then_ignore(some_whitespace())
+                .or(empty().map(|()| None)),
             choice((
                 just("RE")
-                    .then(
+                    .then(Data::parser_inline(
+                        2,
                         WeatherCondition::parser()
                             .repeated()
                             .at_least(1)
                             .collect::<Vec<_>>(),
-                    )
+                    ))
                     .map(|(_, wx)| wx)
                     .separated_by(some_whitespace())
                     .collect::<Vec<_>>()
@@ -171,6 +173,10 @@ impl Parsable for Metar {
                 .separated_by(some_whitespace())
                 .allow_trailing()
                 .collect::<Vec<_>>(),
+            SeaCondition::parser()
+                .map(Some)
+                .then_ignore(some_whitespace())
+                .or(empty().map(|()| None)),
             Trend::parser()
                 .separated_by(any_whitespace())
                 .allow_trailing()
@@ -188,6 +194,7 @@ impl Parsable for Metar {
         ))
         .map(
             |(
+                (),
                 station,
                 time,
                 kind,
@@ -198,9 +205,11 @@ impl Parsable for Metar {
                 (weather, vert_visibility, clouds, cloud_layers),
                 (temperature, dewpoint),
                 pressure,
+                colour_code,
                 recent_weather,
                 windshear_warnings,
                 runway_conditions,
+                sea_condition,
                 trends,
                 clouds_in_vicinity,
                 remarks,
@@ -222,8 +231,10 @@ impl Parsable for Metar {
                     temperature,
                     dewpoint,
                     pressure,
-                    recent_weather: recent_weather.iter().flatten().copied().collect::<Vec<_>>(),
+                    colour_code,
+                    recent_weather,
                     windshear_warnings,
+                    sea_condition,
                     runway_conditions,
                     trends,
                     clouds_in_vicinity,

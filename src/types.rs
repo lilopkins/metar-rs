@@ -10,6 +10,9 @@ pub use cloud_state::Clouds;
 mod cloud_type;
 pub use cloud_type::CloudType;
 
+mod colour_code;
+pub use colour_code::ColourCode;
+
 mod data;
 pub use data::Data;
 
@@ -20,10 +23,13 @@ mod pressure;
 pub use pressure::Pressure;
 
 mod runway_condition;
-pub use runway_condition::RunwayCondition;
+pub use runway_condition::{RunwayCondition, RunwayContamination, RunwayDeposits};
 
 mod rvr;
 pub use rvr::{RunwayVisualRange, RvrTrend, RvrUnit, RvrValue, RvrValueInner};
+
+mod sea_condition;
+pub use sea_condition::{SeaCondition, SeaConditionInner, SeaState};
 
 mod time;
 pub use time::Time;

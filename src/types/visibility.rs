@@ -1,10 +1,6 @@
 use chumsky::prelude::*;
 
-use crate::{
-    parsers::{any_whitespace, some_whitespace},
-    traits::Parsable,
-    Data,
-};
+use crate::{parsers::some_whitespace, traits::Parsable, Data};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 #[allow(missing_docs, reason = "clear what they are!")]
@@ -106,11 +102,14 @@ impl Parsable for Visibility {
     }
 }
 
-impl Parsable for (CompassDirection, Data<Visibility>) {
+impl Parsable for (Option<CompassDirection>, Data<Visibility>) {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
         group((
-            Data::parser_inline(4, Visibility::parser()).then_ignore(any_whitespace()),
-            CompassDirection::parser(),
+            Data::parser_inline(4, Visibility::parser()),
+            choice((
+                just("NDV").map(|_| None),
+                CompassDirection::parser().map(Some),
+            )),
         ))
         .map(|(vis, dir)| (dir, vis))
     }

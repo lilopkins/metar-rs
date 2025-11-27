@@ -1,6 +1,6 @@
 use chumsky::prelude::*;
 
-use crate::{parsers::runway_number, traits::Parsable, ErrorVariant};
+use crate::{parsers::runway_number, traits::Parsable, Data, ErrorVariant};
 
 /// The visibility measured for a specific runway.
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -8,11 +8,11 @@ pub struct RunwayVisualRange {
     /// The runway this measurement applies to
     pub runway: String,
     /// The visibility for this runway
-    pub value: RvrValue,
+    pub value: Data<RvrValue>,
     /// The visibility unit
     pub unit: RvrUnit,
     /// How is the RVR trending?
-    pub trend: RvrTrend,
+    pub trend: Data<RvrTrend>,
 }
 
 impl Parsable for RunwayVisualRange {
@@ -20,11 +20,12 @@ impl Parsable for RunwayVisualRange {
         group((
             runway_number(),
             just("/"),
-            RvrValue::parser(),
+            Data::parser_inline(4, RvrValue::parser()),
             RvrUnit::parser(),
-            RvrTrend::parser(),
+            just("/").map(|_| ()).or(empty()),
+            Data::parser_inline(1, RvrTrend::parser()),
         ))
-        .map(|(runway, _, value, unit, trend)| RunwayVisualRange {
+        .map(|(runway, _, value, unit, (), trend)| RunwayVisualRange {
             runway,
             value,
             unit,
@@ -127,6 +128,7 @@ impl Parsable for RvrTrend {
         choice((
             just("U").map(|_| RvrTrend::Upwards),
             just("D").map(|_| RvrTrend::Downwards),
+            just("N").map(|_| RvrTrend::None),
             empty().map(|()| RvrTrend::None),
         ))
     }
@@ -142,21 +144,21 @@ mod tests {
             RunwayVisualRange::parse("R24L/P1500").unwrap(),
             RunwayVisualRange {
                 runway: "24L".to_string(),
-                value: RvrValue::Single(RvrValueInner::GreaterThan(1500)),
+                value: Data::Known(RvrValue::Single(RvrValueInner::GreaterThan(1500))),
                 unit: RvrUnit::Metres,
-                trend: RvrTrend::None,
+                trend: Data::Known(RvrTrend::None),
             }
         );
         assert_eq!(
             RunwayVisualRange::parse("R25L/1800V3000FT").unwrap(),
             RunwayVisualRange {
                 runway: "25L".to_string(),
-                value: RvrValue::Between(
+                value: Data::Known(RvrValue::Between(
                     RvrValueInner::Exactly(1800),
                     RvrValueInner::Exactly(3000)
-                ),
+                )),
                 unit: RvrUnit::Feet,
-                trend: RvrTrend::None,
+                trend: Data::Known(RvrTrend::None),
             }
         );
     }

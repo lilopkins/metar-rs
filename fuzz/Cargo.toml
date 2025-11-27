@@ -1,0 +1,21 @@
+[package]
+name = "metar-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.metar]
+path = ".."
+
+[[bin]]
+name = "metar"
+path = "fuzz_targets/metar.rs"
+test = false
+doc = false
+bench = false

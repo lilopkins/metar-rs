@@ -40,7 +40,9 @@ impl Parsable for RunwayCondition {
 /// Describes contamination on a runway
 #[derive(PartialEq, Clone, Debug)]
 pub enum RunwayContamination {
+    /// Contamination is cleared
     Cleared,
+    /// Contamination is present
     Present {
         /// Runway deposits
         deposits: Data<RunwayDeposits>,
