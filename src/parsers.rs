@@ -38,3 +38,22 @@ pub(crate) fn some_whitespace<'src>(
 ) -> impl Parser<'src, &'src str, (), extra::Err<crate::MetarError<'src>>> {
     text::inline_whitespace().at_least(1).or(end())
 }
+
+/// Match and parse some whitespace, demanding at least one character of whitespace
+pub(crate) fn temperature<'src>(
+) -> impl Parser<'src, &'src str, i32, extra::Err<crate::MetarError<'src>>> {
+    choice((
+        just("M")
+            .then(
+                text::digits(10)
+                    .exactly(2)
+                    .to_slice()
+                    .map(|d: &str| d.parse::<i32>().unwrap()),
+            )
+            .map(|(_, v)| -v),
+        text::digits(10)
+            .exactly(2)
+            .to_slice()
+            .map(|d: &str| d.parse().unwrap()),
+    ))
+}

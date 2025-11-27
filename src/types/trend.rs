@@ -1,6 +1,9 @@
 use chumsky::prelude::*;
 
-use crate::{parsers::some_whitespace, traits::Parsable, CloudLayer, Visibility, Weather, Wind};
+use crate::{
+    parsers::some_whitespace, traits::Parsable, CloudLayer, VerticalVisibility, Visibility,
+    Weather, Wind,
+};
 
 /// How is the weather expected to change in the near future?
 #[derive(PartialEq, Debug, Clone)]
@@ -31,7 +34,7 @@ impl Parsable for Trend {
 #[derive(PartialEq, Debug, Clone)]
 pub struct TrendNewCondition {
     /// The time from which conditions apply
-    pub time: Option<TrendTime>,
+    pub time: Vec<TrendTime>,
     /// New wind values, if specified
     pub wind: Option<Wind>,
     /// New visibility values, if specified
@@ -40,37 +43,46 @@ pub struct TrendNewCondition {
     pub weather: Vec<Weather>,
     /// New cloud layers, if specified
     pub cloud: Vec<CloudLayer>,
+    /// New vertical visibility, if specified
+    pub vertical_visibility: Option<VerticalVisibility>,
 }
 
 impl Parsable for TrendNewCondition {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
         group((
             TrendTime::parser()
-                .map(Some)
-                .then_ignore(some_whitespace())
-                .or(empty().map(|()| None)),
+                .separated_by(some_whitespace())
+                .allow_trailing()
+                .collect::<Vec<_>>(),
             Wind::parser().map(Some).or(empty().map(|()| None)),
             Visibility::parser()
-                .map(|v| Some(v))
+                .map(Some)
                 .then_ignore(some_whitespace())
                 .or(empty().map(|()| None)),
             choice((
                 just("NSW").map(|_| vec![]).then_ignore(some_whitespace()),
                 Weather::parser()
                     .separated_by(some_whitespace())
+                    .allow_trailing()
                     .collect::<Vec<_>>(),
             )),
             CloudLayer::parser()
                 .separated_by(some_whitespace())
+                .allow_trailing()
                 .collect::<Vec<_>>(),
+            VerticalVisibility::parser()
+                .then_ignore(some_whitespace())
+                .map(Some)
+                .or(empty().map(|()| None)),
         ))
         .map(
-            |(time, wind, visibility, weather, cloud)| TrendNewCondition {
+            |(time, wind, visibility, weather, cloud, vertical_visibility)| TrendNewCondition {
                 time,
                 wind,
                 visibility,
                 weather,
                 cloud,
+                vertical_visibility,
             },
         )
     }
