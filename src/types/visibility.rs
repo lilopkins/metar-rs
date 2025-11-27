@@ -99,9 +99,7 @@ impl Parsable for Visibility {
                     let whole_part: f32 = whole_part.parse().unwrap();
                     let numerator: f32 = numerator.parse().unwrap();
                     let denominator: f32 = denominator.parse().unwrap();
-                    Visibility::StatuteMiles(
-                        whole_part + numerator / denominator,
-                    )
+                    Visibility::StatuteMiles(whole_part + numerator / denominator)
                 },
             ),
         ))
@@ -124,14 +122,8 @@ mod tests {
 
     #[test]
     fn valid_visibility() {
-        assert_eq!(
-            Visibility::parse("CAVOK").unwrap(),
-            Visibility::CAVOK
-        );
-        assert_eq!(
-            Visibility::parse("5000").unwrap(),
-            Visibility::Metres(5000)
-        );
+        assert_eq!(Visibility::parse("CAVOK").unwrap(), Visibility::CAVOK);
+        assert_eq!(Visibility::parse("5000").unwrap(), Visibility::Metres(5000));
         assert_eq!(
             Visibility::parse("3SM").unwrap(),
             Visibility::StatuteMiles(3.)

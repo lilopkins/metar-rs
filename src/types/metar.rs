@@ -121,10 +121,10 @@ impl Parsable for Metar {
                         2,
                         Weather::parser()
                             .separated_by(some_whitespace())
-                            .allow_trailing()
                             .collect::<Vec<_>>(),
                     )
-                    .then_ignore(any_whitespace()),
+                    .then_ignore(some_whitespace())
+                    .or(empty().map(|()| Data::Known(vec![]))),
                     VerticalVisibility::parser()
                         .map(Some)
                         .then_ignore(some_whitespace())

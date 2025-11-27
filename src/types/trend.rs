@@ -1,9 +1,6 @@
 use chumsky::prelude::*;
 
-use crate::{
-    parsers::some_whitespace, traits::Parsable, CloudLayer, Visibility,
-    Weather, Wind,
-};
+use crate::{parsers::some_whitespace, traits::Parsable, CloudLayer, Visibility, Weather, Wind};
 
 /// How is the weather expected to change in the near future?
 #[derive(PartialEq, Debug, Clone)]
