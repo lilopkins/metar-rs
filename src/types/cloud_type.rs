@@ -1,6 +1,6 @@
 use chumsky::prelude::*;
 
-use crate::{CompassDirection, Data, traits::Parsable};
+use crate::{traits::Parsable, CompassDirection, Data};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 /// A cloud type description

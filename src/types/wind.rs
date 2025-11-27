@@ -1,5 +1,6 @@
 use chumsky::prelude::*;
 
+use crate::parsers::whitespace_1plus;
 use crate::traits::Parsable;
 
 use super::Data;
@@ -25,18 +26,20 @@ pub enum Wind {
 impl Parsable for Wind {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
         choice((
-            just("CALM").map(|_| Wind::Calm),
+            just("CALM")
+                .map(|_| Wind::Calm)
+                .then_ignore(whitespace_1plus()),
             group((
                 WindDirection::parser(),
-                WindSpeed::parser(),
-                text::inline_whitespace(),
+                WindSpeed::parser().then_ignore(whitespace_1plus()),
                 choice((
                     group((WindDirection::parser(), just("V"), WindDirection::parser()))
-                        .map(|(from, _, to)| Some((from.unwrap_heading(), to.unwrap_heading()))),
+                        .map(|(from, _, to)| Some((from.unwrap_heading(), to.unwrap_heading())))
+                        .then_ignore(whitespace_1plus()),
                     empty().map(|()| None),
                 )),
             ))
-            .map(|(dir, speed, (), varying)| Wind::Present {
+            .map(|(dir, speed, varying)| Wind::Present {
                 dir,
                 speed,
                 varying,

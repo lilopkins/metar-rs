@@ -1,6 +1,6 @@
 use chumsky::prelude::*;
 
-use crate::traits::Parsable;
+use crate::{parsers::whitespace_1plus, traits::Parsable};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
 /// Cloud state
@@ -16,9 +16,15 @@ pub enum Clouds {
 impl Parsable for Clouds {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
         choice((
-            just("NCD").map(|_| Clouds::NoCloudDetected),
-            just("NSC").map(|_| Clouds::NoSignificantCloud),
-            just("CLR").map(|_| Clouds::NoCloudDetected),
+            just("NCD")
+                .map(|_| Clouds::NoCloudDetected)
+                .then_ignore(whitespace_1plus()),
+            just("NSC")
+                .map(|_| Clouds::NoSignificantCloud)
+                .then_ignore(whitespace_1plus()),
+            just("CLR")
+                .map(|_| Clouds::NoCloudDetected)
+                .then_ignore(whitespace_1plus()),
             empty().map(|()| Clouds::CloudLayers),
         ))
     }

@@ -1,6 +1,9 @@
 use chumsky::prelude::*;
 
-use crate::{traits::Parsable, CloudLayer, Data, ErrorVariant, Visibility, Weather, Wind};
+use crate::{
+    parsers::whitespace_1plus, traits::Parsable, CloudLayer, Data, ErrorVariant, Visibility,
+    Weather, Wind,
+};
 
 /// How is the weather expected to change in the near future?
 #[derive(PartialEq, Debug, Clone)]
@@ -44,36 +47,31 @@ pub struct TrendNewCondition {
 
 impl Parsable for TrendNewCondition {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
-        let whitespace = text::inline_whitespace();
-        let whitespace_1plus = text::inline_whitespace().at_least(1);
-
         group((
             TrendTime::parser()
                 .map(Some)
+                .then_ignore(whitespace_1plus())
                 .or(empty().map(|()| None)),
-            whitespace,
             Wind::parser().map(Some).or(empty().map(|()| None)),
-            whitespace,
             <Data<Visibility> as Parsable>::parser()
                 .try_map(|v, span| match v {
                     Data::Known(v) => Ok(Some(v)),
                     Data::Unknown => Err(ErrorVariant::TrendDataCannotBeUnknown.into_err(span)),
                 })
+                .then_ignore(whitespace_1plus())
                 .or(empty().map(|()| None)),
-            whitespace,
             choice((
-                just("NSW").map(|_| vec![]),
+                just("NSW").map(|_| vec![]).then_ignore(whitespace_1plus()),
                 Weather::parser()
-                    .separated_by(whitespace_1plus)
+                    .separated_by(whitespace_1plus())
                     .collect::<Vec<_>>(),
             )),
-            whitespace,
             CloudLayer::parser()
-                .separated_by(whitespace_1plus)
+                .separated_by(whitespace_1plus())
                 .collect::<Vec<_>>(),
         ))
         .map(
-            |(time, (), wind, (), visibility, (), weather, (), cloud)| TrendNewCondition {
+            |(time, wind, visibility, weather, cloud)| TrendNewCondition {
                 time,
                 wind,
                 visibility,

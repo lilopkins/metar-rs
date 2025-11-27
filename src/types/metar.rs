@@ -1,4 +1,10 @@
-use crate::{traits::Parsable, Time, Kind, Wind, Data, Visibility, CompassDirection, RunwayVisualRange, Clouds, CloudLayer, VerticalVisibility, Weather, Pressure, WeatherCondition, WindshearWarnings, RunwayCondition, Trend, CloudType, MetarError, WindDirection, WindSpeed};
+use crate::{
+    parsers::{whitespace, whitespace_1plus},
+    traits::Parsable,
+    CloudLayer, CloudType, Clouds, CompassDirection, Data, Kind, MetarError, Pressure,
+    RunwayCondition, RunwayVisualRange, Time, Trend, VerticalVisibility, Visibility, Weather,
+    WeatherCondition, Wind, WindDirection, WindSpeed, WindshearWarnings,
+};
 use chumsky::prelude::*;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -50,13 +56,14 @@ pub struct Metar {
 impl Parsable for Metar {
     #[allow(clippy::too_many_lines)]
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<MetarError<'src>>> {
-        let whitespace = text::inline_whitespace();
-        let whitespace_1plus = text::inline_whitespace().at_least(1);
-
         let station = regex("[A-Z0-9]{4}");
         let method = choice((
-            just("AUTO").map(|_| Kind::Automatic),
-            just("COR").map(|_| Kind::Correction),
+            just("AUTO")
+                .map(|_| Kind::Automatic)
+                .then_ignore(whitespace_1plus()),
+            just("COR")
+                .map(|_| Kind::Correction)
+                .then_ignore(whitespace_1plus()),
             empty().map(|()| Kind::Normal),
         ));
 
@@ -76,12 +83,9 @@ impl Parsable for Metar {
         ));
 
         group((
-            station,
-            whitespace,
-            Time::parser(),
-            whitespace,
+            station.then_ignore(whitespace_1plus()),
+            Time::parser().then_ignore(whitespace_1plus()),
             method,
-            whitespace,
             choice((
                 Wind::parser(),
                 empty().map(|()| Wind::Present {
@@ -93,52 +97,58 @@ impl Parsable for Metar {
                     varying: None,
                 }),
             )),
-            whitespace,
-            choice((Data::<Visibility>::parser(), empty().map(|()| Data::Unknown))),
-            whitespace,
-            <(CompassDirection, Data<Visibility>) as Parsable>::parser()
-                .separated_by(whitespace_1plus)
-                .collect::<Vec<_>>(),
-            whitespace,
-            RunwayVisualRange::parser()
-                .separated_by(whitespace_1plus)
-                .collect::<Vec<_>>(),
-            whitespace,
             choice((
-                just("SKC").map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
-                just("CLR").map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
+                Data::<Visibility>::parser().then_ignore(whitespace_1plus()),
+                empty().map(|()| Data::Unknown),
+            )),
+            <(CompassDirection, Data<Visibility>) as Parsable>::parser()
+                .separated_by(whitespace_1plus())
+                .allow_trailing()
+                .collect::<Vec<_>>(),
+            RunwayVisualRange::parser()
+                .separated_by(whitespace_1plus())
+                .allow_trailing()
+                .collect::<Vec<_>>(),
+            choice((
+                just("SKC")
+                    .map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![]))
+                    .then_ignore(whitespace_1plus()),
+                just("CLR")
+                    .map(|_| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![]))
+                    .then_ignore(whitespace_1plus()),
                 group((
                     Data::parser_inline(
                         2,
                         Weather::parser()
-                            .separated_by(whitespace_1plus)
+                            .separated_by(whitespace_1plus())
+                            .allow_trailing()
                             .collect::<Vec<_>>(),
-                    ),
-                    whitespace,
+                    )
+                    .then_ignore(whitespace()),
                     VerticalVisibility::parser()
                         .map(Some)
+                        .then_ignore(whitespace_1plus())
                         .or(empty().map(|()| None)),
-                    whitespace,
                     Clouds::parser(),
-                    whitespace,
                     CloudLayer::parser()
-                        .separated_by(whitespace_1plus)
+                        .separated_by(whitespace_1plus())
+                        .allow_trailing()
                         .collect::<Vec<_>>(),
                 ))
-                .map(|(wx, (), vvis, (), clouds, (), layers)| (wx, vvis, clouds, layers)),
+                .map(|(wx, vvis, clouds, layers)| (wx, vvis, clouds, layers)),
                 empty().map(|()| (Data::Known(vec![]), None, Clouds::NoCloudDetected, vec![])),
             )),
-            whitespace,
             group((
                 Data::parser_inline(2, temperature),
                 just("/"),
                 Data::parser_inline(2, temperature),
             ))
             .map(|(temp, _, dewp)| (temp, dewp))
+            .then_ignore(whitespace_1plus())
             .or(empty().map(|()| (Data::Unknown, Data::Unknown))),
-            whitespace,
-            Pressure::parser().or(empty().map(|()| Pressure::Hectopascals(Data::Unknown))),
-            whitespace,
+            Pressure::parser()
+                .then_ignore(whitespace_1plus())
+                .or(empty().map(|()| Pressure::Hectopascals(Data::Unknown))),
             choice((
                 just("RE")
                     .then(
@@ -148,65 +158,54 @@ impl Parsable for Metar {
                             .collect::<Vec<_>>(),
                     )
                     .map(|(_, wx)| wx)
-                    .separated_by(whitespace_1plus)
-                    .collect::<Vec<_>>(),
+                    .separated_by(whitespace_1plus())
+                    .collect::<Vec<_>>()
+                    .then_ignore(whitespace_1plus()),
                 empty().map(|()| vec![]),
             )),
-            whitespace,
             WindshearWarnings::parser()
                 .map(Some)
+                .then_ignore(whitespace_1plus())
                 .or(empty().map(|()| None)),
-            whitespace,
             RunwayCondition::parser()
-                .separated_by(whitespace_1plus)
+                .separated_by(whitespace_1plus())
+                .allow_trailing()
                 .collect::<Vec<_>>(),
-            whitespace,
-        ))
-        .then(group((
-            Trend::parser().separated_by(whitespace).collect::<Vec<_>>(),
-            whitespace,
+            Trend::parser()
+                .separated_by(whitespace())
+                .allow_trailing()
+                .collect::<Vec<_>>(),
             <(Vec<CompassDirection>, Data<CloudType>) as Parsable>::parser()
-                .separated_by(whitespace_1plus)
+                .separated_by(whitespace_1plus())
+                .allow_trailing()
                 .collect::<Vec<_>>(),
-            whitespace,
             just("RMK")
                 .then(none_of("=").repeated().collect::<String>())
                 .map(|(_, s)| Some(s.trim().to_string()))
                 .or(empty().map(|()| None)),
-            whitespace,
+            whitespace(),
             choice((just("=").map(|_| ()), empty().map(|()| ()))),
-        )))
+        ))
         .map(
             |(
-                (
-                    station,
-                    (),
-                    time,
-                    (),
-                    kind,
-                    (),
-                    wind,
-                    (),
-                    visibility,
-                    (),
-                    reduced_directional_visibility,
-                    (),
-                    rvr,
-                    (),
-                    (weather, vert_visibility, clouds, cloud_layers),
-                    (),
-                    (temperature, dewpoint),
-                    (),
-                    pressure,
-                    (),
-                    recent_weather,
-                    (),
-                    windshear_warnings,
-                    (),
-                    runway_conditions,
-                    (),
-                ),
-                (trends, (), clouds_in_vicinity, (), remarks, (), ()),
+                station,
+                time,
+                kind,
+                wind,
+                visibility,
+                reduced_directional_visibility,
+                rvr,
+                (weather, vert_visibility, clouds, cloud_layers),
+                (temperature, dewpoint),
+                pressure,
+                recent_weather,
+                windshear_warnings,
+                runway_conditions,
+                trends,
+                clouds_in_vicinity,
+                remarks,
+                (),
+                (),
             )| {
                 Metar {
                     station: station.to_string(),
@@ -223,11 +222,7 @@ impl Parsable for Metar {
                     temperature,
                     dewpoint,
                     pressure,
-                    recent_weather: recent_weather
-                        .iter()
-                        .flatten()
-                        .copied()
-                        .collect::<Vec<_>>(),
+                    recent_weather: recent_weather.iter().flatten().copied().collect::<Vec<_>>(),
                     windshear_warnings,
                     runway_conditions,
                     trends,

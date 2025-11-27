@@ -25,3 +25,13 @@ pub(crate) fn runway_number<'src>(
     ))
     .map(|(_, rwy, suffix)| format!("{rwy}{suffix}"))
 }
+
+pub(crate) fn whitespace<'src>(
+) -> impl Parser<'src, &'src str, (), extra::Err<crate::MetarError<'src>>> {
+    text::inline_whitespace().or(end())
+}
+
+pub(crate) fn whitespace_1plus<'src>(
+) -> impl Parser<'src, &'src str, (), extra::Err<crate::MetarError<'src>>> {
+    text::inline_whitespace().at_least(1).or(end())
+}

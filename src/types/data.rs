@@ -69,3 +69,26 @@ impl<T> Data<T> {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_data() {
+        assert_eq!(
+            Data::parser_inline(4, just("ABCD").map(|_| true))
+                .parse("ABCD")
+                .into_result()
+                .unwrap(),
+            Data::Known(true)
+        );
+        assert_eq!(
+            Data::parser_inline(4, just("ABCD").map(|_| true))
+                .parse("////")
+                .into_result()
+                .unwrap(),
+            Data::Unknown
+        );
+    }
+}

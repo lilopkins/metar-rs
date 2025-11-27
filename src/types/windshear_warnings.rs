@@ -1,6 +1,9 @@
 use chumsky::prelude::*;
 
-use crate::{parsers::runway_number, traits::Parsable};
+use crate::{
+    parsers::{runway_number, whitespace_1plus},
+    traits::Parsable,
+};
 
 /// A windshear warnings
 #[derive(PartialEq, Clone, Debug)]
@@ -16,7 +19,7 @@ impl Parsable for WindshearWarnings {
         choice((
             just("WS ALL RWY").map(|_| WindshearWarnings::AllRunways),
             WindshearGroup::parser()
-                .separated_by(text::inline_whitespace().at_least(1))
+                .separated_by(whitespace_1plus())
                 .collect::<Vec<_>>()
                 .map(WindshearWarnings::SpecificRunways),
         ))

@@ -1,6 +1,10 @@
 use chumsky::prelude::*;
 
-use crate::{traits::Parsable, Data};
+use crate::{
+    parsers::{whitespace, whitespace_1plus},
+    traits::Parsable,
+    Data,
+};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 #[allow(missing_docs, reason = "clear what they are!")]
@@ -78,7 +82,7 @@ impl Parsable for Data<Visibility> {
             // Whole and fractional miles
             group((
                 text::digits(10).at_least(1).at_most(2).to_slice(),
-                text::inline_whitespace().at_least(1),
+                whitespace_1plus(),
                 text::digits(10).exactly(1).to_slice(),
                 just("/"),
                 text::digits(10).exactly(1).to_slice(),
@@ -108,11 +112,10 @@ impl Parsable for Data<Visibility> {
 impl Parsable for (CompassDirection, Data<Visibility>) {
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<crate::MetarError<'src>>> {
         group((
-            Data::<Visibility>::parser(),
-            text::inline_whitespace(),
+            Data::<Visibility>::parser().then_ignore(whitespace()),
             CompassDirection::parser(),
         ))
-        .map(|(vis, (), dir)| (dir, vis))
+        .map(|(vis, dir)| (dir, vis))
     }
 }
 
