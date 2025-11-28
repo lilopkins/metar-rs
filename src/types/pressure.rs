@@ -4,6 +4,7 @@ use super::Data;
 use chumsky::prelude::*;
 
 #[derive(PartialEq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// Measured air pressure
 pub enum Pressure {
     /// Pressure in hectopascals

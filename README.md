@@ -31,3 +31,7 @@ fn main() {
 METARs are complicated structures. If you come across a METAR that doesn't parse
 correctly, please open an issue and include the METAR. This will aid in debugging
 the issue significantly.
+
+## Serde support
+
+Optionally, `metar::Metar` type supports serde serialization. Just enable the `serde` feature.

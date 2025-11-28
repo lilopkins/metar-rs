@@ -3,6 +3,7 @@ use chumsky::prelude::*;
 use crate::{parsers::some_whitespace, traits::Parsable};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// Cloud state
 pub enum Clouds {
     /// No cloud was detected, also set for CAVOK

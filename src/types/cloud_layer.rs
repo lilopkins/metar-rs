@@ -5,11 +5,15 @@ use crate::{traits::Parsable, Data};
 use super::CloudType;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// Cloud cover
 pub struct CloudLayer {
-    density: Data<CloudDensity>,
-    kind: Data<CloudType>,
-    height: Data<u32>,
+    /// Cloud density
+    pub density: Data<CloudDensity>,
+    /// Cloud type
+    pub kind: Data<CloudType>,
+    /// Cloud height in feet
+    pub height: Data<u32>,
 }
 
 impl Parsable for CloudLayer {
@@ -35,6 +39,7 @@ impl Parsable for CloudLayer {
 
 /// The density of the cloud cover
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CloudDensity {
     /// Few clouds (1/8)
     Few,

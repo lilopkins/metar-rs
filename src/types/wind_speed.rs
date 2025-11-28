@@ -4,6 +4,7 @@ use crate::{traits::Parsable, Data, MetarError};
 
 /// The wind speed
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum WindSpeed {
     /// Nautical miles per hour
     Knots {

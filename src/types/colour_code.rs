@@ -4,6 +4,7 @@ use crate::traits::Parsable;
 
 /// Military airport colour code
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ColourCode {
     /// 2500ft cloud base, 8000m visibility
     Blue,
