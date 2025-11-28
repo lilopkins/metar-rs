@@ -8,6 +8,7 @@ use super::WindDirection;
 use super::WindSpeed;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// Wind information.
 pub enum Wind {
     /// Calm winds are at 0 kts

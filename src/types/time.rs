@@ -3,6 +3,7 @@ use crate::{error::ErrorVariant, traits::Parsable, MetarError};
 use chumsky::prelude::*;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// A struct to store time as it is represented in a METAR
 pub struct Time {
     /// The date the METAR was made

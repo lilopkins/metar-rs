@@ -643,7 +643,7 @@ checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
 
 [[package]]
 name = "metar"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "annotate-snippets",
  "anyhow",
@@ -652,6 +652,8 @@ dependencies = [
  "cucumber",
  "derive_more 2.0.1",
  "futures",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

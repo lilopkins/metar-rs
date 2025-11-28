@@ -6,6 +6,7 @@ use super::WeatherCondition;
 use super::WeatherIntensity;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// A weather information block
 pub struct Weather {
     /// The intensity of this weather block

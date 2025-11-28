@@ -4,6 +4,7 @@ use crate::{traits::Parsable, Data, ErrorVariant, MetarError};
 
 /// A representation of wind direction
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum WindDirection {
     /// A heading defining wind direction
     Heading(Data<u32>),

@@ -4,6 +4,7 @@ use crate::{parsers::runway_number, traits::Parsable, Data};
 
 /// Describes contamination on a runway
 #[derive(PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RunwayCondition {
     /// Affected runway number
     pub runway_number: String,
@@ -39,6 +40,7 @@ impl Parsable for RunwayCondition {
 
 /// Describes contamination on a runway
 #[derive(PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RunwayContamination {
     /// Contamination is cleared
     Cleared,
@@ -89,6 +91,7 @@ impl Parsable for RunwayContamination {
 /// Describes deposits on a runway
 #[derive(PartialEq, Clone, Debug)]
 #[allow(missing_docs, reason = "clear what each means")]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RunwayDeposits {
     ClearAndDry,
     Damp,

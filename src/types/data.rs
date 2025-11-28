@@ -8,6 +8,7 @@ use crate::MetarError;
 /// usually given but has been replaced in the METAR by slashes, indicating
 /// that it is not known.
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Data<T> {
     /// The data is known and given
     Known(T),

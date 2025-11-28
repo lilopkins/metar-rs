@@ -4,6 +4,7 @@ use crate::{parsers::runway_number, traits::Parsable, Data, ErrorVariant};
 
 /// The visibility measured for a specific runway.
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RunwayVisualRange {
     /// The runway this measurement applies to
     pub runway: String,
@@ -36,6 +37,7 @@ impl Parsable for RunwayVisualRange {
 
 /// The visibility value
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RvrValue {
     /// There is a single value specified
     Single(RvrValueInner),
@@ -63,6 +65,7 @@ impl Parsable for RvrValue {
 
 /// The visibility value
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RvrValueInner {
     /// The value is exactly
     Exactly(u32),
@@ -96,6 +99,7 @@ impl Parsable for RvrValueInner {
 
 /// The unit of measurement
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RvrUnit {
     /// Metres
     Metres,
@@ -114,6 +118,7 @@ impl Parsable for RvrUnit {
 
 /// How is the RVR trending?
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum RvrTrend {
     /// Trending upwards
     Upwards,
