@@ -48,7 +48,10 @@ mod serde_tests {
         assert_eq!(unknown_json, "\"Unknown\"");
 
         // Test WindSpeed serialization
-        let wind_speed = WindSpeed::Knots { speed: Data::Known(15), gusting: None };
+        let wind_speed = WindSpeed::Knots {
+            speed: Data::Known(15),
+            gusting: None,
+        };
         let wind_json = serde_json::to_string(&wind_speed).unwrap();
         assert!(wind_json.contains("Knot"));
         assert!(wind_json.contains("15"));
@@ -57,7 +60,7 @@ mod serde_tests {
         let cloud_layer = CloudLayer {
             density: Data::Known(CloudDensity::Scattered),
             kind: Data::Known(CloudType::Normal),
-            height: Data::Known(600)
+            height: Data::Known(600),
         };
         let cloud_json = serde_json::to_string(&cloud_layer).unwrap();
         assert!(cloud_json.contains("Scattered"));

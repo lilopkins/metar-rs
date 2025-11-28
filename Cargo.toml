@@ -1,6 +1,6 @@
 [package]
 name = "metar"
-version = "0.9.0"
+version = "0.9.1"
 authors = ["Lily Hopkins <lily@hpkns.uk>"]
 edition = "2021"
 description = "A fast METAR parsing library in pure Rust"
@@ -11,20 +11,20 @@ readme = "README.md"
 
 [features]
 default = ["serde"]
-serde = ["dep:serde", "dep:serde_json"]
+serde = ["dep:serde"]
 
 [dependencies]
 annotate-snippets = "0.12.9"
 chumsky = { version = "0.11.2", features = ["regex"] }
 derive_more = { version = "2.0.1", features = ["display"] }
 serde = { version = "1.0", features = ["derive"], optional = true }
-serde_json = { version = "1", optional = true }
 
 [dev-dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
 cucumber = "0.21"
 futures = "0.3"
+serde_json = "1"
 
 [[test]]
 name = "cucumber"
