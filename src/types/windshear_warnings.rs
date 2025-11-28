@@ -7,6 +7,7 @@ use crate::{
 
 /// A windshear warnings
 #[derive(PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum WindshearWarnings {
     /// All runways are affected by windshear
     AllRunways,
@@ -28,6 +29,7 @@ impl Parsable for WindshearWarnings {
 
 /// A runway affected by windshear
 #[derive(PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct WindshearGroup {
     /// The runway number
     pub runway_number: String,

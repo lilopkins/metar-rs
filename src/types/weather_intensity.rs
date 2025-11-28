@@ -3,6 +3,7 @@ use chumsky::prelude::*;
 use crate::traits::Parsable;
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// Intensity of weather
 pub enum WeatherIntensity {
     /// Light (-)

@@ -8,6 +8,7 @@ use crate::{
 use chumsky::prelude::*;
 
 #[derive(PartialEq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// A complete METAR
 pub struct Metar {
     /// The station making the METAR measurement

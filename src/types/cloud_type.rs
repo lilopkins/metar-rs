@@ -3,6 +3,7 @@ use chumsky::prelude::*;
 use crate::{traits::Parsable, CompassDirection, Data};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// A cloud type description
 pub enum CloudType {
     /// A normal cloud

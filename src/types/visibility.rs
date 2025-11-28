@@ -4,6 +4,7 @@ use crate::{parsers::some_whitespace, traits::Parsable, Data};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 #[allow(missing_docs, reason = "clear what they are!")]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// A compass direction
 pub enum CompassDirection {
     North,
@@ -32,6 +33,7 @@ impl Parsable for CompassDirection {
 }
 
 #[derive(PartialEq, Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 /// Horizontal visibility
 pub enum Visibility {
     /// Visibility OK

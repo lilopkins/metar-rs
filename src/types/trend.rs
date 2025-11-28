@@ -7,6 +7,7 @@ use crate::{
 
 /// How is the weather expected to change in the near future?
 #[derive(PartialEq, Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Trend {
     NoSignificantChanges,
@@ -32,6 +33,7 @@ impl Parsable for Trend {
 
 /// New conditions apply
 #[derive(PartialEq, Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TrendNewCondition {
     /// The time from which conditions apply
     pub time: Vec<TrendTime>,
@@ -90,6 +92,7 @@ impl Parsable for TrendNewCondition {
 
 /// The time at which conditions change
 #[derive(PartialEq, Debug, Clone, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TrendTime {
     /// From a particular time, in 24 hour format, eg. 1345
     From(u16),

@@ -4,6 +4,7 @@ use crate::{parsers::temperature, traits::Parsable, Data};
 
 /// Describes the condition of the sea
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SeaCondition {
     /// Sea temperature
     pub temperature: Data<i32>,
@@ -28,6 +29,7 @@ impl Parsable for SeaCondition {
 
 /// Sea condition
 #[derive(PartialEq, Eq, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SeaConditionInner {
     /// Predefined sea state
     State(Data<SeaState>),
@@ -58,6 +60,7 @@ impl Parsable for SeaConditionInner {
 /// The state of the sea
 #[derive(PartialEq, Eq, Clone, Debug)]
 #[allow(missing_docs)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SeaState {
     CalmGlassy,
     CalmRippled,
