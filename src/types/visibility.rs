@@ -68,7 +68,7 @@ impl Parsable for Visibility {
             group((
                 text::digits(10).exactly(1).to_slice(),
                 just("/"),
-                text::digits(10).exactly(1).to_slice(),
+                text::digits(10).at_least(1).at_most(2).to_slice(),
                 just("SM"),
             ))
             .map(|(numerator, _, denominator, _): (&str, &str, &str, &str)| {
