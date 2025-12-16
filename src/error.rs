@@ -71,10 +71,10 @@ impl<'a> chumsky::error::LabelError<'a, &'a str, chumsky::DefaultExpected<'a, ch
     }
 }
 
-impl<'a> chumsky::error::LabelError<'a, &'a str, chumsky::text::TextExpected<'a, &'a str>>
+impl<'a> chumsky::error::LabelError<'a, &'a str, chumsky::text::TextExpected<()>>
     for MetarError<'a>
 {
-    fn expected_found<E: IntoIterator<Item = chumsky::text::TextExpected<'a, &'a str>>>(
+    fn expected_found<E: IntoIterator<Item = chumsky::text::TextExpected<()>>>(
         expected: E,
         found: Option<chumsky::util::MaybeRef<'a, char>>,
         span: SimpleSpan,
@@ -87,7 +87,7 @@ impl<'a> chumsky::error::LabelError<'a, &'a str, chumsky::text::TextExpected<'a,
                 expected: expected
                     .into_iter()
                     .map(|i| match i {
-                        chumsky::text::TextExpected::Digit(_) => ExpectedNext::Digits,
+                        chumsky::text::TextExpected::Digit(..) => ExpectedNext::Digits,
                         _ => unimplemented!(),
                     })
                     .collect(),
