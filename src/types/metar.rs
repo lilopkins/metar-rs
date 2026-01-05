@@ -62,28 +62,32 @@ pub struct Metar {
 impl Parsable for Metar {
     #[allow(clippy::too_many_lines)]
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<MetarError<'src>>> {
+        fn method<'src>() -> impl Parser<'src, &'src str, Kind, extra::Err<crate::MetarError<'src>>> {
+            choice((
+                just("AUTO")
+                    .map(|_| Kind::Automatic)
+                    .then_ignore(some_whitespace()),
+                just("COR")
+                    .map(|_| Kind::Correction)
+                    .then_ignore(some_whitespace()),
+                just("CCA")
+                    .map(|_| Kind::Correction)
+                    .then_ignore(some_whitespace()),
+                empty().map(|()| Kind::Normal),
+            ))
+        }
         let station = regex("[A-Z0-9]{4}");
-        let method = choice((
-            just("AUTO")
-                .map(|_| Kind::Automatic)
-                .then_ignore(some_whitespace()),
-            just("COR")
-                .map(|_| Kind::Correction)
-                .then_ignore(some_whitespace()),
-            just("CCA")
-                .map(|_| Kind::Correction)
-                .then_ignore(some_whitespace()),
-            empty().map(|()| Kind::Normal),
-        ));
+
 
         group((
             just("METAR")
                 .then_ignore(some_whitespace())
                 .map(|_| ())
                 .or(empty()),
+            method(),
             station.then_ignore(some_whitespace()),
             Time::parser().then_ignore(some_whitespace()),
-            method,
+            method(),
             choice((
                 Wind::parser(),
                 empty().map(|()| Wind::Present {
@@ -196,6 +200,7 @@ impl Parsable for Metar {
         .map(
             |(
                 (),
+                early_kind,
                 station,
                 time,
                 kind,
@@ -220,7 +225,7 @@ impl Parsable for Metar {
                 Metar {
                     station: station.to_string(),
                     time,
-                    kind,
+                    kind: if early_kind != Kind::Normal { early_kind } else { kind },
                     wind,
                     visibility,
                     reduced_directional_visibility,

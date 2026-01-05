@@ -1,8 +1,7 @@
 use chumsky::prelude::*;
 
 use crate::{
-    parsers::some_whitespace, traits::Parsable, CloudLayer, VerticalVisibility, Visibility,
-    Weather, Wind,
+    CloudLayer, VerticalVisibility, Visibility, Weather, Wind, parsers::{any_whitespace, some_whitespace}, traits::Parsable
 };
 
 /// How is the weather expected to change in the near future?
@@ -55,14 +54,15 @@ impl Parsable for TrendNewCondition {
             TrendTime::parser()
                 .separated_by(some_whitespace())
                 .allow_trailing()
-                .collect::<Vec<_>>(),
+                .collect::<Vec<_>>()
+                .or(empty().map(|()| vec![])),
             Wind::parser().map(Some).or(empty().map(|()| None)),
             Visibility::parser()
                 .map(Some)
-                .then_ignore(some_whitespace())
+                .then_ignore(any_whitespace())
                 .or(empty().map(|()| None)),
             choice((
-                just("NSW").map(|_| vec![]).then_ignore(some_whitespace()),
+                just("NSW").map(|_| vec![]).then_ignore(any_whitespace()),
                 Weather::parser()
                     .separated_by(some_whitespace())
                     .allow_trailing()
@@ -73,7 +73,7 @@ impl Parsable for TrendNewCondition {
                 .allow_trailing()
                 .collect::<Vec<_>>(),
             VerticalVisibility::parser()
-                .then_ignore(some_whitespace())
+                .then_ignore(any_whitespace())
                 .map(Some)
                 .or(empty().map(|()| None)),
         ))
