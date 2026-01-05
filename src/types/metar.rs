@@ -225,10 +225,10 @@ impl Parsable for Metar {
                 Metar {
                     station: station.to_string(),
                     time,
-                    kind: if early_kind != Kind::Normal {
-                        early_kind
-                    } else {
+                    kind: if early_kind == Kind::Normal {
                         kind
+                    } else {
+                        early_kind
                     },
                     wind,
                     visibility,
