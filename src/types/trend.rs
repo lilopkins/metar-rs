@@ -1,7 +1,9 @@
 use chumsky::prelude::*;
 
 use crate::{
-    CloudLayer, VerticalVisibility, Visibility, Weather, Wind, parsers::{any_whitespace, some_whitespace}, traits::Parsable
+    parsers::{any_whitespace, some_whitespace},
+    traits::Parsable,
+    CloudLayer, VerticalVisibility, Visibility, Weather, Wind,
 };
 
 /// How is the weather expected to change in the near future?

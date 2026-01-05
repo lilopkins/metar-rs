@@ -62,7 +62,8 @@ pub struct Metar {
 impl Parsable for Metar {
     #[allow(clippy::too_many_lines)]
     fn parser<'src>() -> impl Parser<'src, &'src str, Self, extra::Err<MetarError<'src>>> {
-        fn method<'src>() -> impl Parser<'src, &'src str, Kind, extra::Err<crate::MetarError<'src>>> {
+        fn method<'src>() -> impl Parser<'src, &'src str, Kind, extra::Err<crate::MetarError<'src>>>
+        {
             choice((
                 just("AUTO")
                     .map(|_| Kind::Automatic)
@@ -77,7 +78,6 @@ impl Parsable for Metar {
             ))
         }
         let station = regex("[A-Z0-9]{4}");
-
 
         group((
             just("METAR")
@@ -225,7 +225,11 @@ impl Parsable for Metar {
                 Metar {
                     station: station.to_string(),
                     time,
-                    kind: if early_kind != Kind::Normal { early_kind } else { kind },
+                    kind: if early_kind != Kind::Normal {
+                        early_kind
+                    } else {
+                        kind
+                    },
                     wind,
                     visibility,
                     reduced_directional_visibility,
